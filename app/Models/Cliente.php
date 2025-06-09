@@ -11,5 +11,11 @@ class Cliente extends Model
         'email',
         'telefone',
         'data_nascimento',
+        'genero',
+        'cpf',
+        'cep',
+        'endereco',
+        'numero',
+        'complemento'
     ];
 }
