@@ -32,10 +32,21 @@ new class extends Component
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
-                    </x-nav-link>
+                    </x-nav-link>                    
                      <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index')">
                         {{ __('Clientes') }}
-                    </x-nav-link>                    
+                    </x-nav-link>
+                    
+                     <!-- NOVOS LINKS DO SISTEMA DE AGENDAMENTOS -->                    
+                    <x-nav-link :href="route('servicos.index')" :active="request()->routeIs('servicos.index')" wire:navigate>
+                        {{ __('Serviços') }}
+                    </x-nav-link>
+
+                     <x-nav-link :href="route('agendamentos.index')" :active="request()->routeIs('agendamentos.index')" wire:navigate>
+                        {{ __('Agendamentos') }}
+                    </x-nav-link>                   
+                    
+                    <!-- FIM DOS NOVOS LINKS -->
                 </div>
             </div>
 
@@ -87,9 +98,20 @@ new class extends Component
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            
             <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index')">
                     {{ __('Clientes') }}
             </x-responsive-nav-link>
+            <!-- NOVOS LINKS RESPONSIVOS DO SISTEMA DE AGENDAMENTOS -->
+            <x-responsive-nav-link :href="route('servicos.index')" :active="request()->routeIs('servicos.index')" wire:navigate>
+                {{ __('Serviços') }}
+            </x-responsive-nav-link>            
+            <x-responsive-nav-link :href="route('agendamentos.index')" :active="request()->routeIs('agendamentos.index')" wire:navigate>
+                {{ __('Agendamentos') }}
+            </x-responsive-nav-link>
+            <!-- FIM DOS NOVOS LINKS RESPONSIVOS -->
+            
+            
         </div>
 
         <!-- Responsive Settings Options -->

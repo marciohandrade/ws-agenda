@@ -112,14 +112,6 @@ class ClienteCrud extends Component
 
     public function render()
     {
-       /*  return view('livewire.painel.cliente-crud', [
-            'clientes' => Cliente::latest()->get()
-        ]); */
-
-       /*  return view('livewire.painel.cliente-crud')
-         ->layout('layouts.app');
-        } */
-
        $clientes = Cliente::orderBy('nome')->get();
 
         return view('livewire.painel.cliente-crud', [

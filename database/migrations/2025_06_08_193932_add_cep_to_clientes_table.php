@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
          Schema::table('clientes', function (Blueprint $table) {
-            $table->string('cep', 9)->after('cpf');
+            
         });
     }
 };

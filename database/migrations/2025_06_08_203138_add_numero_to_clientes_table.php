@@ -11,8 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::table('clientes', function (Blueprint $table) {
-            $table->string('numero', 10)->after('cep');
+         Schema::table('clientes', function (Blueprint $table) {            
         });
     }
 
@@ -21,8 +20,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('clientes', function (Blueprint $table) {
-            $table->string('numero', 10)->after('cep');
+        Schema::table('clientes', function (Blueprint $table) {            
         });
     }
 };

@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('clientes', function (Blueprint $table) {
-            $table->string('cpf')->after('telefone');
-            $table->string('endereco')->after('cpf');
+            $table->string('cpf')->after('telefone');            
             $table->string('numero')->after('endereco');
             $table->string('complemento')->nullable()->after('numero');
         });
