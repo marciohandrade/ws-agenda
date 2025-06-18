@@ -91,22 +91,8 @@
 
             <div class="flex-1 min-w-[180px]">
                 <label>Horário *</label>
-                <select wire:model="horario_agendamento" class="w-full border rounded p-2">
-                    <option value="">Selecione um horário</option>
-                    @foreach($horariosDisponiveis as $horario)
-                        <option value="{{ $horario }}">{{ $horario }}</option>
-                    @endforeach
-                </select>
+                <input type="time" wire:model="horario_agendamento" class="w-full border rounded p-2">
                 @error('horario_agendamento') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                @if(empty($horariosDisponiveis) && $data_agendamento)
-                    <small class="text-orange-600 text-xs">
-                        @if(\Carbon\Carbon::parse($data_agendamento)->isWeekend())
-                            Não atendemos aos finais de semana. Selecione um dia útil.
-                        @else
-                            Nenhum horário disponível para esta data.
-                        @endif
-                    </small>
-                @endif
             </div>
 
             <div class="flex-1 min-w-[180px]">
@@ -137,8 +123,7 @@
                 </button>
             @endif
 
-            <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-900"
-                    @if(empty($horariosDisponiveis) && $data_agendamento) disabled @endif>
+            <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-900">
                 {{ $editando ? 'Atualizar' : 'Cadastrar' }}
             </button>
         </div>
@@ -309,4 +294,4 @@
         @endif
     </div>
 
-</div> <!-- FECHA A DIV PRINCIPAL -->## ✅ **Adaptação Completa da View de Agendamentos Realizada!**
+</div> <!-- FECHA A DIV PRINCIPAL -->

@@ -22,19 +22,23 @@ new class extends Component
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
+                <!-- <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}" wire:navigate>
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
                     </a>
-                </div>
+                </div> -->
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
+                    <!-- <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
-                    </x-nav-link>                    
+                    </x-nav-link>                     -->
                      <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index')">
                         {{ __('Clientes') }}
+                    </x-nav-link>
+                    
+                    <x-nav-link :href="route('configuracoes-agendamento.index')" :active="request()->routeIs('configuracoes-agendamento.index')" wire:navigate>
+                        {{ __('Configurações') }}
                     </x-nav-link>
                     
                      <!-- NOVOS LINKS DO SISTEMA DE AGENDAMENTOS -->                    
@@ -94,14 +98,15 @@ new class extends Component
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+        <div class="pt-2 pb-3 space-y-1">           
             
             <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index')">
-                    {{ __('Clientes') }}
+                {{ __('Clientes') }}
             </x-responsive-nav-link>
+            
+            <x-nav-link :href="route('configuracoes-agendamento.index')" :active="request()->routeIs('configuracoes-agendamento.index')" wire:navigate>
+                        {{ __('Configurações') }}
+                    </x-nav-link>
             <!-- NOVOS LINKS RESPONSIVOS DO SISTEMA DE AGENDAMENTOS -->
             <x-responsive-nav-link :href="route('servicos.index')" :active="request()->routeIs('servicos.index')" wire:navigate>
                 {{ __('Serviços') }}
