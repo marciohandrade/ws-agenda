@@ -14,7 +14,7 @@ class Cliente extends Model
         'telefone',
         'data_nascimento',
         'genero',
-        'cpf',
+        //'cpf',
         'cep',
         'endereco',
         'numero',

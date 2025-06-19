@@ -18,6 +18,10 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+    Route::get('/cadastro', function () {
+        return view('pages.cadastro-publico');
+    });
+
 Route::get('/agendamento', AgendamentoPublico::class)
     ->name('agendamento.publico');
 
