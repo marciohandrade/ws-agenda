@@ -12,15 +12,29 @@ Route::view('/', 'welcome');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+->name('dashboard');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
-    ->name('profile');
+->name('profile');
 
-    Route::get('/cadastro', function () {
-        return view('pages.cadastro-publico');
-    });
+Route::get('/', function () {
+    return view('index');
+});
+//============================================
+// Rota para agendamento online
+Route::get('/agendar', function () {
+    return view('agendamento');
+})->name('agendar');
+//============================================
+
+Route::get('/cadastro', function () {
+    return view('pages.cadastro-publico');
+});
+
+Route::get('/agendar', function () {
+    return view('agendamento');
+})->name('agendar');
 
 Route::get('/agendamento', AgendamentoPublico::class)
     ->name('agendamento.publico');
