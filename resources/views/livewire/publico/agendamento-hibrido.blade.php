@@ -25,75 +25,194 @@
         </div>
     </div>
 
+    {{-- ERRO GERAL --}}
+    @if($mensagemErro)
+        <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {{ $mensagemErro }}
+        </div>
+    @endif
+
     {{-- ETAPA 1: DADOS DO AGENDAMENTO --}}
     @if($etapaAtual == 1)
         <div>
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
-                Escolha sua consulta
+                <i class="fas fa-calendar-plus mr-2 text-blue-600"></i>
+                Escolha seu agendamento
             </h2>
 
             <form wire:submit="proximaEtapa" class="space-y-6">
-                {{-- Especialidade --}}
+                {{-- Serviço --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Especialidade *
+                        <i class="fas fa-medical mr-2 text-blue-600"></i>
+                        Serviço *
                     </label>
-                    <select wire:model.live="especialidade" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('especialidade') border-red-500 @enderror">
-                        <option value="">Selecione uma especialidade</option>
-                        @foreach($especialidades as $key => $value)
-                            <option value="{{ $key }}">{{ $value }}</option>
-                        @endforeach
-                    </select>
-                    @error('especialidade')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- Médico --}}
-                @if($especialidade)
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Médico *
-                        </label>
-                        <select wire:model="medico" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('medico') border-red-500 @enderror">
-                            <option value="">Selecione um médico</option>
-                            @foreach($medicos[$especialidade] ?? [] as $med)
-                                <option value="{{ $med }}">{{ $med }}</option>
+                    
+                    @if(isset($servicos) && is_array($servicos) && count($servicos) > 0)
+                        <select wire:model="servico_id" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('servico_id') border-red-500 @enderror">
+                            <option value="">Selecione um serviço...</option>
+                            @foreach($servicos as $servico)
+                                <option value="{{ $servico['id'] }}">{{ $servico['display_completo'] }}</option>
                             @endforeach
                         </select>
-                        @error('medico')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                @endif
+                    @else
+                        <div class="w-full px-3 py-3 border border-red-300 rounded-lg bg-red-50">
+                            <p class="text-red-600 text-sm">❌ Nenhum serviço disponível.</p>
+                        </div>
+                    @endif
+                    
+                    @error('servico_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                    
+                    {{-- Descrição do serviço selecionado --}}
+                    @if($servico_id && isset($servicos))
+                        @php
+                            $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
+                        @endphp
+                        @if($servicoSelecionado && !empty($servicoSelecionado['descricao']))
+                            <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+                                <p class="text-sm text-blue-700">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    {{ $servicoSelecionado['descricao'] }}
+                                </p>
+                            </div>
+                        @endif
+                    @endif
+                </div>
 
-                {{-- Data --}}
-                <div>
+                {{-- CALENDÁRIO PERSONALIZADO - SEMPRE VISÍVEL --}}
+                <div wire:loading.class="opacity-50" wire:target="mesAnterior,mesProximo,selecionarData">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Data da consulta *
+                        <i class="fas fa-calendar mr-2 text-blue-600"></i>
+                        Escolha a Data *
                     </label>
-                    <input type="date" wire:model="dataAgendamento" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('dataAgendamento') border-red-500 @enderror"
-                           min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                    
+                    {{-- Navegação do Calendário --}}
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <div class="flex justify-between items-center mb-4">
+                            <button type="button" wire:click="mesAnterior" 
+                                    class="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                                <i class="fas fa-chevron-left text-gray-600"></i>
+                            </button>
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                {{ $this->nomesMeses[$mesAtual] }} {{ $anoAtual }}
+                            </h3>
+                            <button type="button" wire:click="mesProximo" 
+                                    class="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                                <i class="fas fa-chevron-right text-gray-600"></i>
+                            </button>
+                        </div>
+                        
+                        {{-- Grid do Calendário --}}
+                        <div class="grid grid-cols-7 gap-1 text-center text-sm">
+                            {{-- Cabeçalho dos dias da semana --}}
+                            <div class="p-2 font-semibold text-gray-600">Dom</div>
+                            <div class="p-2 font-semibold text-gray-600">Seg</div>
+                            <div class="p-2 font-semibold text-gray-600">Ter</div>
+                            <div class="p-2 font-semibold text-gray-600">Qua</div>
+                            <div class="p-2 font-semibold text-gray-600">Qui</div>
+                            <div class="p-2 font-semibold text-gray-600">Sex</div>
+                            <div class="p-2 font-semibold text-gray-600">Sáb</div>
+                            
+                            {{-- Dias do calendário --}}
+                            @foreach($this->dadosCalendario as $dia)
+                                <div class="relative">
+                                    @if($dia['isOutroMes'])
+                                        {{-- Dia de outro mês --}}
+                                        <div class="p-3 text-gray-300 cursor-default min-h-[2.5rem] flex items-center justify-center">
+                                            {{ $dia['dia'] }}
+                                        </div>
+                                    @elseif($dia['isPassado'])
+                                        {{-- Dia passado --}}
+                                        <div class="p-3 bg-gray-100 text-gray-400 cursor-not-allowed min-h-[2.5rem] flex items-center justify-center rounded">
+                                            {{ $dia['dia'] }}
+                                        </div>
+                                    @elseif(!$dia['isFuncionamento'])
+                                        {{-- Dia sem funcionamento --}}
+                                        <div class="p-3 bg-red-50 text-red-400 cursor-not-allowed min-h-[2.5rem] flex items-center justify-center rounded border border-red-200">
+                                            {{ $dia['dia'] }}
+                                            <span class="absolute top-0 right-0 text-xs">🚫</span>
+                                        </div>
+                                    @elseif($dia['isDisponivel'])
+                                        {{-- Dia disponível --}}
+                                        <button type="button" 
+                                                wire:click="selecionarData('{{ $dia['data'] }}')"
+                                                class="w-full p-3 min-h-[2.5rem] flex items-center justify-center rounded transition-all duration-200 
+                                                       {{ $dia['isSelecionado'] 
+                                                          ? 'bg-blue-600 text-white border-blue-600' 
+                                                          : 'bg-white border border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-gray-800' }}
+                                                       {{ $dia['isHoje'] ? 'ring-2 ring-blue-200' : '' }}">
+                                            {{ $dia['dia'] }}
+                                            @if($dia['isHoje'])
+                                                <span class="absolute top-0 right-0 text-xs">📍</span>
+                                            @endif
+                                        </button>
+                                    @else
+                                        {{-- Dia indisponível (bloqueado) --}}
+                                        <div class="p-3 bg-yellow-50 text-yellow-600 cursor-not-allowed min-h-[2.5rem] flex items-center justify-center rounded border border-yellow-200">
+                                            {{ $dia['dia'] }}
+                                            <span class="absolute top-0 right-0 text-xs">⚠️</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        {{-- Legenda --}}
+                        <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-blue-600 rounded mr-1"></div>
+                                <span class="text-gray-600">Selecionado</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-white border rounded mr-1"></div>
+                                <span class="text-gray-600">Disponível</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-red-50 border border-red-200 rounded mr-1"></div>
+                                <span class="text-gray-600">Fechado</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-50 border border-yellow-200 rounded mr-1"></div>
+                                <span class="text-gray-600">Bloqueado</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{-- Campo hidden para a data selecionada --}}
+                    <input type="hidden" wire:model="dataAgendamento">
+                    
                     @error('dataAgendamento')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
+                    
+                    {{-- Feedback da data selecionada --}}
+                    @if($dataSelecionada)
+                        <div class="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <p class="text-sm text-green-700">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Data selecionada: <strong>{{ \Carbon\Carbon::parse($dataSelecionada)->format('d/m/Y') }}</strong>
+                            </p>
+                        </div>
+                    @endif
                 </div>
 
-                {{-- Horário --}}
-                @if($dataAgendamento)
+                {{-- Horário (campo manual por enquanto) --}}
+                @if($dataSelecionada)
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-clock mr-2 text-blue-600"></i>
                             Horário *
                         </label>
-                        <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-                            @foreach($horariosDisponiveis as $horario)
-                                <button type="button" 
-                                        wire:click="$set('horarioAgendamento', '{{ $horario }}')"
-                                        class="px-3 py-2 border rounded-md text-sm transition {{ $horarioAgendamento === $horario ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50' }}">
-                                    {{ $horario }}
-                                </button>
-                            @endforeach
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p class="text-yellow-700 text-sm mb-2">
+                                <i class="fas fa-construction mr-1"></i>
+                                <strong>Temporário:</strong> Digite o horário manualmente. A grade de horários disponíveis será implementada em breve.
+                            </p>
+                            <input type="time" wire:model="horarioAgendamento" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Ex: 14:30">
                         </div>
                         @error('horarioAgendamento')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -104,18 +223,23 @@
                 {{-- Observações --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-comment mr-2 text-blue-600"></i>
                         Observações (opcional)
                     </label>
                     <textarea wire:model="observacoes" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Descreva sintomas ou informações importantes..."></textarea>
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Descreva informações importantes para o atendimento..."></textarea>
                 </div>
 
                 {{-- Botão continuar --}}
                 <div class="flex justify-end">
                     <button type="submit" 
-                            class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium">
-                        Continuar <i class="fas fa-arrow-right ml-2"></i>
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove>Continuar <i class="fas fa-arrow-right ml-2"></i></span>
+                        <span wire:loading>
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Carregando...
+                        </span>
                     </button>
                 </div>
             </form>
@@ -130,184 +254,43 @@
 
             {{-- Resumo do agendamento --}}
             <div class="bg-blue-50 rounded-lg p-4 mb-6">
-                <h3 class="font-semibold text-blue-800 mb-2">Resumo da consulta:</h3>
+                <h3 class="font-semibold text-blue-800 mb-2">Resumo do agendamento:</h3>
                 <div class="text-sm space-y-1">
-                    <p><strong>Especialidade:</strong> {{ $especialidades[$especialidade] }}</p>
-                    <p><strong>Médico:</strong> {{ $medico }}</p>
-                    <p><strong>Data:</strong> {{ date('d/m/Y', strtotime($dataAgendamento)) }}</p>
-                    <p><strong>Horário:</strong> {{ $horarioAgendamento }}</p>
+                    @if($servico_id && isset($servicos))
+                        @php
+                            $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
+                        @endphp
+                        @if($servicoSelecionado)
+                            <p><strong>Serviço:</strong> {{ $servicoSelecionado['nome'] }}</p>
+                            <p><strong>Preço:</strong> {{ $servicoSelecionado['preco_formatado'] }}</p>
+                            <p><strong>Duração:</strong> {{ $servicoSelecionado['duracao_formatada'] }}</p>
+                        @endif
+                    @endif
+                    <p><strong>Data:</strong> {{ $dataAgendamento ? \Carbon\Carbon::parse($dataAgendamento)->format('d/m/Y') : 'Não informada' }}</p>
+                    <p><strong>Horário:</strong> {{ $horarioAgendamento ?: 'Não informado' }}</p>
                 </div>
             </div>
 
-            {{-- Mensagem de erro geral --}}
-            @if($mensagemErro)
-                <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {{ $mensagemErro }}
-                </div>
-            @endif
-
-            {{-- Escolha do tipo de login --}}
-            @if(!$tipoLogin)
-                <div class="grid md:grid-cols-2 gap-4">
-                    <button wire:click="definirTipoLogin('login')" 
-                            class="p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center">
-                        <i class="fas fa-sign-in-alt text-3xl text-blue-600 mb-3"></i>
-                        <h3 class="font-bold text-lg mb-2">Já tenho conta</h3>
-                        <p class="text-gray-600 text-sm">Faça login com seu e-mail e senha</p>
-                    </button>
-
-                    <button wire:click="definirTipoLogin('cadastro')" 
-                            class="p-6 border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                        <i class="fas fa-user-plus text-3xl text-green-600 mb-3"></i>
-                        <h3 class="font-bold text-lg mb-2">Primeira vez</h3>
-                        <p class="text-gray-600 text-sm">Crie sua conta em alguns segundos</p>
-                    </button>
-                </div>
-
-            {{-- FORMULÁRIO DE LOGIN --}}
-            @elseif($tipoLogin === 'login')
-                <form wire:submit="fazerLogin" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                        <input type="email" wire:model="email" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror">
-                        @error('email')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                        <input type="password" wire:model="senha" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senha') border-red-500 @enderror">
-                        @error('senha')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="flex justify-between items-center pt-4">
-                        <button type="button" wire:click="$set('tipoLogin', '')" 
-                                class="text-gray-600 hover:text-gray-800">
-                            <i class="fas fa-arrow-left mr-1"></i> Voltar
-                        </button>
-                        
-                        <button type="submit" 
-                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                            Entrar e Agendar
-                        </button>
-                    </div>
-                </form>
-
-            {{-- FORMULÁRIO DE CADASTRO --}}
-            @elseif($tipoLogin === 'cadastro')
-                <form wire:submit="fazerCadastro" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
-                        <input type="text" wire:model="nome" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('nome') border-red-500 @enderror">
-                        @error('nome')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                        <input type="email" wire:model="email" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror">
-                        @error('email')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                        <input type="tel" wire:model="telefone" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('telefone') border-red-500 @enderror"
-                               placeholder="(11) 99999-9999">
-                        @error('telefone')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                        <input type="password" wire:model="senha" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senha') border-red-500 @enderror">
-                        @error('senha')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
-                        <input type="password" wire:model="senhaConfirmacao" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senhaConfirmacao') border-red-500 @enderror">
-                        @error('senhaConfirmacao')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="flex justify-between items-center pt-4">
-                        <button type="button" wire:click="$set('tipoLogin', '')" 
-                                class="text-gray-600 hover:text-gray-800">
-                            <i class="fas fa-arrow-left mr-1"></i> Voltar
-                        </button>
-                        
-                        <button type="submit" 
-                                class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-                                wire:loading.attr="disabled">
-                            <span wire:loading.remove>Criar Conta e Agendar</span>
-                            <span wire:loading>Processando...</span>
-                        </button>
-                    </div>
-                </form>
-            @endif
-
-            {{-- Botão voltar para etapa anterior --}}
-            @if(!$tipoLogin)
-                <div class="flex justify-between items-center pt-6">
-                    <button wire:click="etapaAnterior" 
-                            class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-arrow-left mr-1"></i> Voltar
-                    </button>
-                </div>
-            @endif
+            {{-- Área de login/cadastro simplificada para teste --}}
+            <div class="text-center">
+                <p class="text-gray-600 mb-4">Funcionalidade de login/cadastro em desenvolvimento...</p>
+                <button wire:click="etapaAnterior" 
+                        class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    <i class="fas fa-arrow-left mr-1"></i> Voltar
+                </button>
+            </div>
         </div>
 
     {{-- ETAPA 3: SUCESSO --}}
-    @elseif($etapaAtual == 3)
+    @else
         <div class="text-center">
-            <div class="mb-6">
-                <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
-                <h2 class="text-2xl font-bold text-gray-800 mb-3">
-                    Agendamento Realizado!
-                </h2>
-                <p class="text-gray-600">
-                    {{ $mensagemSucesso }}
-                </p>
-            </div>
-
-            {{-- Resumo final --}}
-            <div class="bg-green-50 rounded-lg p-6 mb-6">
-                <h3 class="font-semibold text-green-800 mb-4">Detalhes da sua consulta:</h3>
-                <div class="space-y-2 text-sm">
-                    <p><strong>Especialidade:</strong> {{ $especialidades[$especialidade] }}</p>
-                    <p><strong>Médico:</strong> {{ $medico }}</p>
-                    <p><strong>Data:</strong> {{ date('d/m/Y', strtotime($dataAgendamento)) }}</p>
-                    <p><strong>Horário:</strong> {{ $horarioAgendamento }}</p>
-                    <p><strong>Status:</strong> <span class="text-orange-600 font-medium">Aguardando confirmação</span></p>
-                </div>
-            </div>
-
-            <div class="space-y-3">
-                <a href="/" class="block w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition text-center">
-                    Voltar ao Site
-                </a>
-                <button wire:click="$set('etapaAtual', 1)" 
-                        class="block w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-300 transition">
-                    Fazer Outro Agendamento
-                </button>
-            </div>
+            <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-800 mb-3">Agendamento Realizado!</h2>
+            <p class="text-gray-600 mb-4">{{ $mensagemSucesso }}</p>
+            <button wire:click="$set('etapaAtual', 1)" 
+                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Fazer Outro Agendamento
+            </button>
         </div>
     @endif
 </div>

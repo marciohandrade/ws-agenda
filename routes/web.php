@@ -32,16 +32,20 @@ Route::get('/cadastro', function () {
     return view('pages.cadastro-publico');
 });
 
-Route::get('/agendar', function () {
-    return view('agendamento');
-})->name('agendar');
 
-Route::get('/agendamento', AgendamentoPublico::class)
-    ->name('agendamento.publico');
+/* Route::get('/agendar', function () {
+    return view('agendamento');
+})->name('agendar'); */
+
+
+
+/* Route::get('/agendamento', AgendamentoPublico::class)
+    ->name('agendamento.publico'); */
 
 // Rota alternativa (para compatibilidade)
-Route::get('/agendar', AgendamentoPublico::class)
-    ->name('agendar');
+
+/* Route::get('/agendar', AgendamentoPublico::class)
+    ->name('agendar'); */
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/painel/clientes', ClienteCrud::class)

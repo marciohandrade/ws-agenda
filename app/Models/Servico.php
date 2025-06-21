@@ -4,71 +4,65 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Servico extends Model
 {
     use HasFactory;
 
+    /**
+     * A tabela associada ao modelo.
+     */
+    protected $table = 'servicos';
+
+    /**
+     * Os atributos que podem ser atribuídos em massa.
+     */
     protected $fillable = [
         'nome',
         'descricao',
-        'duracao_minutos',
         'preco',
-        'ativo'
-    ];
-
-    protected $casts = [
-        'ativo' => 'boolean',
-        'preco' => 'decimal:2'
+        'duracao',
+        'ativo',
     ];
 
     /**
-     * Relacionamento com agendamentos
+     * Os atributos que devem ser convertidos para tipos nativos.
      */
-    public function agendamentos(): HasMany
-    {
-        return $this->hasMany(Agendamento::class);
-    }
+    protected $casts = [
+        'preco' => 'decimal:2',
+        'duracao' => 'integer',
+        'ativo' => 'boolean',
+    ];
 
     /**
-     * Scope para serviços ativos
+     * Scope para buscar apenas serviços ativos.
      */
     public function scopeAtivos($query)
     {
         return $query->where('ativo', true);
     }
 
-     /**
-     * Scope para serviços ativos (alias)
+    /**
+     * Accessor para formatar o preço.
      */
-    public function scopeAtivo($query)
+    public function getPrecoFormatadoAttribute()
     {
-        return $query->where('ativo', true);
+        return 'R$ ' . number_format($this->preco, 2, ',', '.');
     }
 
     /**
-     * Accessor para preço formatado
+     * Accessor para formatar a duração.
      */
-    public function getPrecoFormatadoAttribute(): string
+    public function getDuracaoFormatadaAttribute()
     {
-        return $this->preco ? 'R$ ' . number_format($this->preco, 2, ',', '.') : 'Não informado';
+        return $this->duracao . ' min';
     }
 
     /**
-     * Accessor para duração formatada
+     * Accessor para exibição completa do serviço.
      */
-    public function getDuracaoFormatadaAttribute(): string
+    public function getDisplayCompletoAttribute()
     {
-        $horas = floor($this->duracao_minutos / 60);
-        $minutos = $this->duracao_minutos % 60;
-        
-        if ($horas > 0 && $minutos > 0) {
-            return "{$horas}h {$minutos}min";
-        } elseif ($horas > 0) {
-            return "{$horas}h";
-        } else {
-            return "{$minutos}min";
-        }
+        return $this->nome . ' - ' . $this->preco_formatado . ' (' . $this->duracao_formatada . ')';
     }
 }
