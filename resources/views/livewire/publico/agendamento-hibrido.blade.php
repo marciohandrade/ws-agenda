@@ -198,25 +198,86 @@
                     @endif
                 </div>
 
-                {{-- Horário (campo manual por enquanto) --}}
+                {{-- GRADE DE HORÁRIOS --}}
                 @if($dataSelecionada)
-                    <div>
+                    <div wire:loading.class="opacity-50" wire:target="selecionarHorario">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-clock mr-2 text-blue-600"></i>
-                            Horário *
+                            Escolha o Horário *
                         </label>
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <p class="text-yellow-700 text-sm mb-2">
-                                <i class="fas fa-construction mr-1"></i>
-                                <strong>Temporário:</strong> Digite o horário manualmente. A grade de horários disponíveis será implementada em breve.
-                            </p>
-                            <input type="time" wire:model="horarioAgendamento" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Ex: 14:30">
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            @if($carregandoHorarios)
+                                {{-- Loading state --}}
+                                <div class="text-center py-8">
+                                    <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
+                                    <p class="text-gray-600">Carregando horários disponíveis...</p>
+                                </div>
+                            @elseif(empty($horariosDisponiveis))
+                                {{-- Nenhum horário disponível --}}
+                                <div class="text-center py-8">
+                                    <i class="fas fa-exclamation-triangle text-2xl text-yellow-500 mb-2"></i>
+                                    <p class="text-gray-600 font-medium">Nenhum horário disponível para esta data</p>
+                                    <p class="text-sm text-gray-500">Escolha outra data no calendário</p>
+                                </div>
+                            @else
+                                {{-- Grade de horários --}}
+                                <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                                    @foreach($horariosDisponiveis as $horario)
+                                        @if($horario['disponivel'])
+                                            {{-- Horário disponível --}}
+                                            <button type="button" 
+                                                    wire:click="selecionarHorario('{{ $horario['value'] }}')"
+                                                    class="p-3 rounded-lg border text-sm font-medium transition-all duration-200
+                                                           {{ $horarioSelecionado === $horario['value'] 
+                                                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                                                              : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300' }}">
+                                                {{ $horario['display'] }}
+                                            </button>
+                                        @else
+                                            {{-- Horário ocupado --}}
+                                            <div class="p-3 rounded-lg border text-sm font-medium bg-red-50 text-red-400 border-red-200 cursor-not-allowed">
+                                                {{ $horario['display'] }}
+                                                <div class="text-xs">Ocupado</div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                
+                                {{-- Legenda dos horários --}}
+                                <div class="mt-4 flex flex-wrap justify-center gap-4 text-xs">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-blue-600 rounded mr-1"></div>
+                                        <span class="text-gray-600">Selecionado</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-white border rounded mr-1"></div>
+                                        <span class="text-gray-600">Disponível</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-red-50 border border-red-200 rounded mr-1"></div>
+                                        <span class="text-gray-600">Ocupado</span>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
+                        
+                        {{-- Campo hidden para o horário selecionado --}}
+                        <input type="hidden" wire:model="horarioAgendamento">
+                        
                         @error('horarioAgendamento')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
+                        
+                        {{-- Feedback do horário selecionado --}}
+                        @if($horarioSelecionado)
+                            <div class="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                                <p class="text-sm text-green-700">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Horário selecionado: <strong>{{ $horarioSelecionado }}</strong>
+                                </p>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
