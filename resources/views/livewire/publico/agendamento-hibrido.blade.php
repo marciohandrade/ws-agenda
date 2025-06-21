@@ -307,51 +307,248 @@
         </div>
 
     {{-- ETAPA 2: LOGIN/CADASTRO --}}
-    @elseif($etapaAtual == 2)
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
-                Para finalizar, identifique-se
-            </h2>
+    {{-- ETAPA 2: LOGIN/CADASTRO UNIFICADO --}}
+@elseif($etapaAtual == 2)
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            <i class="fas fa-user-plus mr-2 text-blue-600"></i>
+            Finalize seu agendamento
+        </h2>
 
-            {{-- Resumo do agendamento --}}
-            <div class="bg-blue-50 rounded-lg p-4 mb-6">
-                <h3 class="font-semibold text-blue-800 mb-2">Resumo do agendamento:</h3>
-                <div class="text-sm space-y-1">
-                    @if($servico_id && isset($servicos))
-                        @php
-                            $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
-                        @endphp
-                        @if($servicoSelecionado)
-                            <p><strong>Serviço:</strong> {{ $servicoSelecionado['nome'] }}</p>
-                            <p><strong>Preço:</strong> {{ $servicoSelecionado['preco_formatado'] }}</p>
-                            <p><strong>Duração:</strong> {{ $servicoSelecionado['duracao_formatada'] }}</p>
-                        @endif
+        {{-- Resumo do agendamento --}}
+        <div class="bg-blue-50 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold text-blue-800 mb-2">Resumo do agendamento:</h3>
+            <div class="text-sm space-y-1">
+                @if($servico_id && isset($servicos))
+                    @php
+                        $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
+                    @endphp
+                    @if($servicoSelecionado)
+                        <p><strong>Serviço:</strong> {{ $servicoSelecionado['nome'] }}</p>
+                        <p><strong>Preço:</strong> {{ $servicoSelecionado['preco_formatado'] }}</p>
+                        <p><strong>Duração:</strong> {{ $servicoSelecionado['duracao_formatada'] }}</p>
                     @endif
-                    <p><strong>Data:</strong> {{ $dataAgendamento ? \Carbon\Carbon::parse($dataAgendamento)->format('d/m/Y') : 'Não informada' }}</p>
-                    <p><strong>Horário:</strong> {{ $horarioAgendamento ?: 'Não informado' }}</p>
-                </div>
+                @endif
+                <p><strong>Data:</strong> {{ $dataAgendamento ? \Carbon\Carbon::parse($dataAgendamento)->format('d/m/Y') : 'Não informada' }}</p>
+                <p><strong>Horário:</strong> {{ $horarioAgendamento ?: 'Não informado' }}</p>
             </div>
+        </div>
 
-            {{-- Área de login/cadastro simplificada para teste --}}
-            <div class="text-center">
-                <p class="text-gray-600 mb-4">Funcionalidade de login/cadastro em desenvolvimento...</p>
-                <button wire:click="etapaAnterior" 
-                        class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-                    <i class="fas fa-arrow-left mr-1"></i> Voltar
+        {{-- Mensagem de erro --}}
+        @if($mensagemErro)
+            <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {{ $mensagemErro }}
+            </div>
+        @endif
+
+        {{-- Escolha do tipo: login ou cadastro --}}
+        @if(!$tipoLogin)
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <button wire:click="definirTipoLogin('login')" 
+                        class="p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center">
+                    <i class="fas fa-sign-in-alt text-3xl text-blue-600 mb-3"></i>
+                    <h3 class="font-bold text-lg mb-2">Já tenho conta</h3>
+                    <p class="text-gray-600 text-sm">Faça login com seu e-mail e senha</p>
+                </button>
+
+                <button wire:click="definirTipoLogin('cadastro')" 
+                        class="p-6 border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
+                    <i class="fas fa-user-plus text-3xl text-green-600 mb-3"></i>
+                    <h3 class="font-bold text-lg mb-2">Primeira vez</h3>
+                    <p class="text-gray-600 text-sm">Crie sua conta e agende em uma só etapa</p>
                 </button>
             </div>
-        </div>
+
+        {{-- FORMULÁRIO DE LOGIN --}}
+        @elseif($tipoLogin === 'login')
+            <form wire:submit="fazerLogin" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                    <input type="email" wire:model="email" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror">
+                    @error('email')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                    <input type="password" wire:model="senha" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senha') border-red-500 @enderror">
+                    @error('senha')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="flex justify-between items-center pt-4">
+                    <button type="button" wire:click="$set('tipoLogin', '')" 
+                            class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-arrow-left mr-1"></i> Voltar
+                    </button>
+                    
+                    <button type="submit" 
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Entrar e Agendar
+                    </button>
+                </div>
+            </form>
+
+        {{-- FORMULÁRIO DE CADASTRO UNIFICADO --}}
+        @elseif($tipoLogin === 'cadastro')
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-green-800 mb-2">
+                    <i class="fas fa-sparkles mr-2"></i>Cadastro Inteligente
+                </h4>
+                <p class="text-sm text-green-700">
+                    Vamos criar sua conta e finalizar o agendamento em uma única etapa. 
+                    Você já ficará logado no sistema para acompanhar seus agendamentos!
+                </p>
+            </div>
+
+            <form wire:submit="fazerCadastroUnificado" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome completo *</label>
+                    <input type="text" wire:model="nome" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('nome') border-red-500 @enderror"
+                           placeholder="Seu nome completo">
+                    @error('nome')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
+                    <input type="email" wire:model="email" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
+                           placeholder="seu@email.com">
+                    <p class="text-xs text-gray-500 mt-1">Este será seu login para acessar o sistema</p>
+                    @error('email')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
+                    <input type="tel" wire:model="telefone" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('telefone') border-red-500 @enderror"
+                           placeholder="(11) 99999-9999">
+                    @error('telefone')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha *</label>
+                    <input type="password" wire:model="senha" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senha') border-red-500 @enderror"
+                           placeholder="Mínimo 6 caracteres">
+                    <p class="text-xs text-gray-500 mt-1">Deve conter letras e números</p>
+                    @error('senha')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha *</label>
+                    <input type="password" wire:model="senhaConfirmacao" 
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senhaConfirmacao') border-red-500 @enderror"
+                           placeholder="Digite a senha novamente">
+                    @error('senhaConfirmacao')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="flex justify-between items-center pt-4">
+                    <button type="button" wire:click="$set('tipoLogin', '')" 
+                            class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-arrow-left mr-1"></i> Voltar
+                    </button>
+                    
+                    <button type="submit" 
+                            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove>
+                            <i class="fas fa-check mr-2"></i>Criar Conta e Agendar
+                        </span>
+                        <span wire:loading>
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Processando...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        @endif
+
+        {{-- Botão voltar para etapa anterior --}}
+        @if(!$tipoLogin)
+            <div class="flex justify-center pt-6">
+                <button wire:click="etapaAnterior" 
+                        class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-1"></i> Voltar para escolha de horário
+                </button>
+            </div>
+        @endif
+    </div>
 
     {{-- ETAPA 3: SUCESSO --}}
-    @else
-        <div class="text-center">
-            <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
-            <h2 class="text-2xl font-bold text-gray-800 mb-3">Agendamento Realizado!</h2>
-            <p class="text-gray-600 mb-4">{{ $mensagemSucesso }}</p>
-            <button wire:click="$set('etapaAtual', 1)" 
-                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Fazer Outro Agendamento
-            </button>
+    {{-- ETAPA 3: SUCESSO --}}
+@else
+    <div class="text-center">
+        <div class="mb-6">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <i class="fas fa-check text-2xl text-green-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-3">
+                🎉 Agendamento Confirmado!
+            </h2>
+            <p class="text-gray-600">
+                {{ $mensagemSucesso }}
+            </p>
         </div>
-    @endif
+
+        {{-- Resumo final --}}
+        <div class="bg-green-50 rounded-lg p-6 mb-6">
+            <h3 class="font-semibold text-green-800 mb-4">Detalhes do seu agendamento:</h3>
+            <div class="space-y-2 text-sm">
+                @if($this->servicoSelecionado)
+                    <p><strong>Serviço:</strong> {{ $this->servicoSelecionado['nome'] }}</p>
+                    <p><strong>Preço:</strong> {{ $this->servicoSelecionado['preco_formatado'] }}</p>
+                    <p><strong>Duração:</strong> {{ $this->servicoSelecionado['duracao_formatada'] }}</p>
+                @endif
+                <p><strong>Data:</strong> {{ \Carbon\Carbon::parse($dataAgendamento)->format('d/m/Y') }}</p>
+                <p><strong>Horário:</strong> {{ $horarioAgendamento }}</p>
+                <p><strong>Status:</strong> <span class="text-orange-600 font-medium">Aguardando confirmação</span></p>
+                @if($agendamentoId)
+                    <p><strong>Código:</strong> <span class="font-mono text-blue-600">#{{ str_pad($agendamentoId, 6, '0', STR_PAD_LEFT) }}</span></p>
+                @endif
+            </div>
+        </div>
+
+        {{-- Informações pós-agendamento --}}
+        <div class="bg-blue-50 rounded-lg p-6 mb-6">
+            <h4 class="font-semibold text-blue-800 mb-2">
+                <i class="fas fa-user-check mr-2"></i>Sua conta foi criada!
+            </h4>
+            <p class="text-blue-700 text-sm mb-3">
+                Você já está logado no sistema e pode acompanhar seus agendamentos.
+            </p>
+            <div class="text-xs text-blue-600 space-y-1">
+                <p><strong>Login:</strong> {{ $email }}</p>
+                <p><strong>Acesso:</strong> Use a mesma senha que criou</p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <a href="/agendamentos" class="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center">
+                <i class="fas fa-list mr-2"></i>Ver Meus Agendamentos
+            </a>
+            <button wire:click="$set('etapaAtual', 1)" 
+                    class="block w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition">
+                <i class="fas fa-plus mr-2"></i>Fazer Outro Agendamento
+            </button>
+            <a href="/" class="block w-full text-gray-600 px-6 py-2 text-center hover:text-gray-800 transition">
+                Voltar ao Site
+            </a>
+        </div>
+    </div>
+@endif
 </div>

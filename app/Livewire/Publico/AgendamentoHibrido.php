@@ -3,6 +3,9 @@
 namespace App\Livewire\Publico;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 use Carbon\Carbon;
 
@@ -17,7 +20,7 @@ class AgendamentoHibrido extends Component
     public $horarioAgendamento = '';
     public $observacoes = '';
     
-    // DADOS DO USUÁRIO
+    // DADOS DO USUÁRIO UNIFICADO
     public $tipoLogin = '';
     public $email = '';
     public $senha = '';
@@ -29,6 +32,7 @@ class AgendamentoHibrido extends Component
     public $carregando = false;
     public $mensagemErro = '';
     public $mensagemSucesso = '';
+    public $agendamentoId = null;
     
     // DADOS
     public $servicos = [];
@@ -71,7 +75,6 @@ class AgendamentoHibrido extends Component
     public function carregarDiasFuncionamento()
     {
         try {
-            // Buscar diretamente do banco ao invés de fazer HTTP
             $diasFuncionamento = DB::table('horarios_funcionamento')
                 ->where('ativo', 1)
                 ->pluck('dia_semana')
@@ -82,13 +85,11 @@ class AgendamentoHibrido extends Component
             if (!empty($diasFuncionamento)) {
                 $this->diasFuncionamento = $diasFuncionamento;
             } else {
-                // Fallback: segunda a sexta (1-5)
                 $this->diasFuncionamento = [1, 2, 3, 4, 5];
             }
             
         } catch (\Exception $e) {
             $this->mensagemErro = 'Aviso: Usando configuração padrão. Erro: ' . $e->getMessage();
-            // Fallback: segunda a sexta
             $this->diasFuncionamento = [1, 2, 3, 4, 5];
         }
     }
@@ -102,17 +103,15 @@ class AgendamentoHibrido extends Component
             $dataCarbon = Carbon::parse($data);
             $diaSemana = $dataCarbon->dayOfWeek;
             
-            // PRIMEIRO: Verificar se estabelecimento está aberto neste dia
             $horarioFuncionamento = DB::table('horarios_funcionamento')
                 ->where('dia_semana', $diaSemana)
                 ->where('ativo', 1)
                 ->first();
             
             if (!$horarioFuncionamento) {
-                return false; // Fechado neste dia
+                return false;
             }
             
-            // SEGUNDO: Verificar bloqueios
             $bloqueado = DB::table('bloqueios_agendamento')
                 ->where('ativo', 1)
                 ->where(function ($query) use ($dataCarbon) {
@@ -127,10 +126,9 @@ class AgendamentoHibrido extends Component
                 })
                 ->exists();
             
-            return !$bloqueado; // Disponível se não estiver bloqueado
+            return !$bloqueado;
             
         } catch (\Exception $e) {
-            // Em caso de erro, usar lógica simples
             $diaSemana = Carbon::parse($data)->dayOfWeek;
             return in_array($diaSemana, $this->diasFuncionamento);
         }
@@ -169,12 +167,8 @@ class AgendamentoHibrido extends Component
     {
         $this->dataSelecionada = $data;
         $this->dataAgendamento = $data;
-        
-        // Limpar horário selecionado anterior
         $this->horarioSelecionado = '';
         $this->horarioAgendamento = '';
-        
-        // Carregar horários para esta data
         $this->carregarHorarios($data);
     }
 
@@ -190,7 +184,6 @@ class AgendamentoHibrido extends Component
             $dataCarbon = Carbon::parse($data);
             $diaSemana = $dataCarbon->dayOfWeek;
             
-            // Buscar horário de funcionamento
             $horarioFuncionamento = DB::table('horarios_funcionamento')
                 ->where('dia_semana', $diaSemana)
                 ->where('ativo', 1)
@@ -201,7 +194,6 @@ class AgendamentoHibrido extends Component
                 return;
             }
             
-            // Gerar horários
             $horarios = [];
             $dataStr = $dataCarbon->format('Y-m-d');
             
@@ -212,9 +204,8 @@ class AgendamentoHibrido extends Component
             $fim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . $horaFim);
             
             $current = $inicio->copy();
-            $intervalo = 30; // minutos
+            $intervalo = 30;
             
-            // Buscar agendamentos existentes
             $agendamentosOcupados = DB::table('agendamentos')
                 ->where('data_agendamento', $dataStr)
                 ->whereIn('status', ['pendente', 'confirmado'])
@@ -225,9 +216,7 @@ class AgendamentoHibrido extends Component
                 })
                 ->toArray();
             
-            // Gerar grade de horários
             while ($current < $fim) {
-                // Verificar horário de almoço
                 if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
                     $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
                     $almocoFim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_fim, 0, 8));
@@ -255,16 +244,11 @@ class AgendamentoHibrido extends Component
             
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao carregar horários: ' . $e->getMessage();
-            // Horários de exemplo em caso de erro
             $this->horariosDisponiveis = [
                 ['value' => '08:00', 'display' => '08:00', 'disponivel' => true, 'ocupado' => false],
-                ['value' => '08:30', 'display' => '08:30', 'disponivel' => true, 'ocupado' => false],
                 ['value' => '09:00', 'display' => '09:00', 'disponivel' => false, 'ocupado' => true],
-                ['value' => '09:30', 'display' => '09:30', 'disponivel' => true, 'ocupado' => false],
                 ['value' => '10:00', 'display' => '10:00', 'disponivel' => true, 'ocupado' => false],
                 ['value' => '14:00', 'display' => '14:00', 'disponivel' => true, 'ocupado' => false],
-                ['value' => '14:30', 'display' => '14:30', 'disponivel' => false, 'ocupado' => true],
-                ['value' => '15:00', 'display' => '15:00', 'disponivel' => true, 'ocupado' => false],
             ];
         }
         
@@ -281,6 +265,234 @@ class AgendamentoHibrido extends Component
     }
 
     /**
+     * Definir tipo de login
+     */
+    public function definirTipoLogin($tipo)
+    {
+        $this->tipoLogin = $tipo;
+        $this->mensagemErro = '';
+    }
+
+    /**
+     * Fazer login existente
+     */
+    public function fazerLogin()
+    {
+        $this->validate([
+            'email' => 'required|email',
+            'senha' => 'required'
+        ], [
+            'email.required' => 'Digite seu e-mail',
+            'email.email' => 'E-mail inválido',
+            'senha.required' => 'Digite sua senha'
+        ]);
+        
+        if (Auth::attempt(['email' => $this->email, 'password' => $this->senha])) {
+            $this->finalizarAgendamento();
+        } else {
+            $this->addError('senha', 'E-mail ou senha incorretos');
+        }
+    }
+
+    /**
+     * Cadastro unificado: Usuário + Cliente + Agendamento
+     */
+    /**
+ * Cadastro unificado: Usuário + Cliente + Agendamento
+ */
+public function fazerCadastroUnificado()
+{
+        $this->carregando = true;
+        $this->mensagemErro = '';
+        
+        try {
+            // Validações
+            $this->validate([
+                'nome' => 'required|string|min:3|max:255',
+                'email' => 'required|email|unique:users,email',
+                'telefone' => 'required|string|min:10|max:20',
+                'senha' => ['required', Password::min(6)->letters()->numbers()],
+                'senhaConfirmacao' => 'required|same:senha'
+            ], [
+                'nome.required' => 'Digite seu nome completo',
+                'nome.min' => 'Nome deve ter pelo menos 3 caracteres',
+                'email.required' => 'Digite seu e-mail',
+                'email.email' => 'E-mail inválido',
+                'email.unique' => 'Este e-mail já está cadastrado',
+                'telefone.required' => 'Digite seu telefone',
+                'telefone.min' => 'Telefone deve ter pelo menos 10 dígitos',
+                'senha.required' => 'Digite uma senha',
+                'senhaConfirmacao.same' => 'As senhas não coincidem'
+            ]);
+            
+            // Verificar conflito de horário antes de salvar
+            $conflito = DB::table('agendamentos')
+                ->where('data_agendamento', $this->dataAgendamento)
+                ->whereTime('horario_agendamento', $this->horarioAgendamento . ':00')
+                ->whereIn('status', ['pendente', 'confirmado'])
+                ->where('ativo', 1)
+                ->exists();
+            
+            if ($conflito) {
+                $this->mensagemErro = 'Este horário não está mais disponível. Selecione outro horário.';
+                $this->carregando = false;
+                $this->carregarHorarios($this->dataAgendamento); // Recarregar horários
+                return;
+            }
+            
+            DB::transaction(function () {
+                // 1. Criar usuário
+                $userId = DB::table('users')->insertGetId([
+                    'name' => $this->nome,
+                    'email' => $this->email,
+                    'password' => Hash::make($this->senha),
+                    'telefone' => preg_replace('/\D/', '', $this->telefone),
+                    'tipo_usuario' => 'usuario',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                // 2. Criar cliente (SEM coluna 'ativo')
+                $clienteId = DB::table('clientes')->insertGetId([
+                    'user_id' => $userId,
+                    'nome' => $this->nome,
+                    'email' => $this->email,
+                    'telefone' => preg_replace('/\D/', '', $this->telefone),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                // 3. Criar agendamento
+                $this->agendamentoId = DB::table('agendamentos')->insertGetId([
+                    'cliente_id' => $clienteId,
+                    'user_id' => $userId,
+                    'servico_id' => $this->servico_id,
+                    'data_agendamento' => $this->dataAgendamento,
+                    'horario_agendamento' => $this->horarioAgendamento . ':00',
+                    'cliente_nome' => $this->nome,
+                    'cliente_email' => $this->email,
+                    'cliente_telefone' => preg_replace('/\D/', '', $this->telefone),
+                    'observacoes' => $this->observacoes,
+                    'status' => 'pendente',
+                    'origem' => 'publico',
+                    'cliente_cadastrado_automaticamente' => true,
+                    'ativo' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                // 4. Login automático
+                Auth::loginUsingId($userId);
+            });
+            
+            $this->etapaAtual = 3;
+            $this->mensagemSucesso = 'Agendamento realizado com sucesso! Sua conta foi criada e você já está logado no sistema.';
+            
+        } catch (\Exception $e) {
+            $this->mensagemErro = 'Erro ao processar agendamento: ' . $e->getMessage();
+        }
+        
+        $this->carregando = false;
+}
+
+    /**
+     * Finalizar agendamento (para login existente)
+     */
+    /**
+ * Finalizar agendamento (para login existente)
+ */
+    private function finalizarAgendamento()
+    {
+        try {
+            // Verificar conflito
+            $conflito = DB::table('agendamentos')
+                ->where('data_agendamento', $this->dataAgendamento)
+                ->whereTime('horario_agendamento', $this->horarioAgendamento . ':00')
+                ->whereIn('status', ['pendente', 'confirmado'])
+                ->where('ativo', 1)
+                ->exists();
+            
+            if ($conflito) {
+                $this->mensagemErro = 'Este horário não está mais disponível. Selecione outro horário.';
+                $this->carregarHorarios($this->dataAgendamento);
+                return;
+            }
+            
+            // Buscar ou criar cliente
+            $cliente = DB::table('clientes')->where('user_id', Auth::id())->first();
+            
+            if (!$cliente) {
+                $clienteId = DB::table('clientes')->insertGetId([
+                    'user_id' => Auth::id(),
+                    'nome' => Auth::user()->name,
+                    'email' => Auth::user()->email,
+                    'telefone' => Auth::user()->telefone ?? '',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                $clienteId = $cliente->id;
+            }
+            
+            // Criar agendamento
+            $this->agendamentoId = DB::table('agendamentos')->insertGetId([
+                'cliente_id' => $clienteId,
+                'user_id' => Auth::id(),
+                'servico_id' => $this->servico_id,
+                'data_agendamento' => $this->dataAgendamento,
+                'horario_agendamento' => $this->horarioAgendamento . ':00',
+                'cliente_nome' => Auth::user()->name,
+                'cliente_email' => Auth::user()->email,
+                'cliente_telefone' => Auth::user()->telefone ?? '',
+                'observacoes' => $this->observacoes,
+                'status' => 'pendente',
+                'origem' => 'publico',
+                'cliente_cadastrado_automaticamente' => false,
+                'ativo' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            $this->etapaAtual = 3;
+            $this->mensagemSucesso = 'Agendamento realizado com sucesso!';
+            
+        } catch (\Exception $e) {
+            $this->mensagemErro = 'Erro ao finalizar agendamento: ' . $e->getMessage();
+        }
+    }
+
+    /**
+     * Próxima etapa
+     */
+    public function proximaEtapa()
+    {
+        if ($this->etapaAtual == 1) {
+            $this->validate([
+                'servico_id' => 'required',
+                'dataAgendamento' => 'required|date|after:today',
+                'horarioAgendamento' => 'required',
+            ], [
+                'servico_id.required' => 'Selecione um serviço',
+                'dataAgendamento.required' => 'Selecione uma data no calendário',
+                'dataAgendamento.after' => 'A data deve ser futura',
+                'horarioAgendamento.required' => 'Selecione um horário disponível',
+            ]);
+            
+            $this->etapaAtual = 2;
+        }
+    }
+    
+    /**
+     * Etapa anterior
+     */
+    public function etapaAnterior()
+    {
+        if ($this->etapaAtual > 1) {
+            $this->etapaAtual--;
+        }
+    }
+
+    /**
      * Obter dados do calendário
      */
     public function getDadosCalendarioProperty()
@@ -289,11 +501,8 @@ class AgendamentoHibrido extends Component
         $ultimoDiaDoMes = $primeiroDiaDoMes->copy()->endOfMonth();
         $hoje = now()->startOfDay();
         
-        // Início da grade (domingo da primeira semana)
-        $inicioGrade = $primeiroDiaDoMes->copy()->startOfWeek(0); // 0 = domingo
-        
-        // Fim da grade (sábado da última semana)
-        $fimGrade = $ultimoDiaDoMes->copy()->endOfWeek(6); // 6 = sábado
+        $inicioGrade = $primeiroDiaDoMes->copy()->startOfWeek(0);
+        $fimGrade = $ultimoDiaDoMes->copy()->endOfWeek(6);
         
         $dias = [];
         $current = $inicioGrade->copy();
@@ -303,10 +512,8 @@ class AgendamentoHibrido extends Component
             $isPassado = $current < $hoje;
             $diaSemana = $current->dayOfWeek;
             
-            // Verificar se está nos dias de funcionamento
             $isFuncionamento = in_array($diaSemana, $this->diasFuncionamento);
             
-            // Verificar disponibilidade (apenas para dias não passados e do mês atual)
             $isDisponivel = false;
             if (!$isOutroMes && !$isPassado && $isFuncionamento) {
                 $isDisponivel = $this->isDiaDisponivel($current);
@@ -347,7 +554,6 @@ class AgendamentoHibrido extends Component
     public function carregarServicos()
     {
         try {
-            // Buscar da base de dados
             $servicosDB = DB::table('servicos')
                 ->where('ativo', 1)
                 ->orderBy('nome')
@@ -367,10 +573,8 @@ class AgendamentoHibrido extends Component
                     ];
                 })->toArray();
             } else {
-                // Se não houver serviços no banco, usar dados de exemplo
                 $this->usarDadosExemplo();
             }
-            
         } catch (\Exception $e) {
             $this->mensagemErro = 'Aviso: Usando dados de exemplo. Erro: ' . $e->getMessage();
             $this->usarDadosExemplo();
@@ -384,67 +588,16 @@ class AgendamentoHibrido extends Component
     {
         $this->servicos = [
             [
-                'id' => 1,
-                'nome' => 'Consulta Médica',
-                'descricao' => 'Consulta médica geral',
-                'preco' => 100.00,
-                'duracao' => 30,
-                'preco_formatado' => 'R$ 100,00',
-                'duracao_formatada' => '30 min',
-                'display_completo' => 'Consulta Médica - R$ 100,00 (30 min)'
+                'id' => 1, 'nome' => 'Consulta Médica', 'descricao' => 'Consulta médica geral',
+                'preco' => 100.00, 'duracao' => 30, 'preco_formatado' => 'R$ 100,00',
+                'duracao_formatada' => '30 min', 'display_completo' => 'Consulta Médica - R$ 100,00 (30 min)'
             ],
             [
-                'id' => 2,
-                'nome' => 'Exame de Sangue',
-                'descricao' => 'Coleta de sangue para exames laboratoriais',
-                'preco' => 80.00,
-                'duracao' => 15,
-                'preco_formatado' => 'R$ 80,00',
-                'duracao_formatada' => '15 min',
-                'display_completo' => 'Exame de Sangue - R$ 80,00 (15 min)'
-            ],
-            [
-                'id' => 3,
-                'nome' => 'Consulta Especializada',
-                'descricao' => 'Consulta com médico especialista',
-                'preco' => 200.00,
-                'duracao' => 45,
-                'preco_formatado' => 'R$ 200,00',
-                'duracao_formatada' => '45 min',
-                'display_completo' => 'Consulta Especializada - R$ 200,00 (45 min)'
+                'id' => 2, 'nome' => 'Exame de Sangue', 'descricao' => 'Coleta de sangue para exames laboratoriais',
+                'preco' => 80.00, 'duracao' => 15, 'preco_formatado' => 'R$ 80,00',
+                'duracao_formatada' => '15 min', 'display_completo' => 'Exame de Sangue - R$ 80,00 (15 min)'
             ]
         ];
-    }
-
-    /**
-     * Próxima etapa
-     */
-    public function proximaEtapa()
-    {
-        if ($this->etapaAtual == 1) {
-            $this->validate([
-                'servico_id' => 'required',
-                'dataAgendamento' => 'required|date|after:today',
-                'horarioAgendamento' => 'required',
-            ], [
-                'servico_id.required' => 'Selecione um serviço',
-                'dataAgendamento.required' => 'Selecione uma data no calendário',
-                'dataAgendamento.after' => 'A data deve ser futura',
-                'horarioAgendamento.required' => 'Selecione um horário disponível',
-            ]);
-            
-            $this->etapaAtual = 2;
-        }
-    }
-    
-    /**
-     * Etapa anterior
-     */
-    public function etapaAnterior()
-    {
-        if ($this->etapaAtual > 1) {
-            $this->etapaAtual--;
-        }
     }
     
     /**
