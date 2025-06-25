@@ -8,7 +8,11 @@ use App\Livewire\Painel\ConfiguracoesAgendamento;
 use App\Livewire\Publico\AgendamentoPublico;
 use App\Livewire\Painel\DashboardAgendamentos;
 
-Route::view('/', 'welcome');
+/* Route::view('/', 'welcome'); */
+
+Route::get('/', function () {
+    return view('index');
+});
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -18,9 +22,7 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
 ->name('profile');
 
-Route::get('/', function () {
-    return view('index');
-});
+
 //============================================
 // Rota para agendamento online
 Route::get('/agendar', function () {
@@ -28,24 +30,9 @@ Route::get('/agendar', function () {
 })->name('agendar');
 //============================================
 
-Route::get('/cadastro', function () {
+/* Route::get('/cadastro', function () {
     return view('pages.cadastro-publico');
-});
-
-
-/* Route::get('/agendar', function () {
-    return view('agendamento');
-})->name('agendar'); */
-
-
-
-/* Route::get('/agendamento', AgendamentoPublico::class)
-    ->name('agendamento.publico'); */
-
-// Rota alternativa (para compatibilidade)
-
-/* Route::get('/agendar', AgendamentoPublico::class)
-    ->name('agendar'); */
+}); */
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/painel/clientes', ClienteCrud::class)
@@ -63,5 +50,22 @@ Route::middleware(['auth'])->group(function () {
     /* Route::get('/painel/dashboard-agendamentos', DashboardAgendamentos::class); */
     
 });
+
+// Rota dashboard - redireciona baseado no tipo de usuário
+Route::middleware(['auth'])->get('/dashboard', function () {
+    $user = auth()->user();
+    
+    switch ($user->tipo_usuario) {
+        case 'admin':
+        case 'colaborador':
+            return redirect()->route('painel.agendamentos.index');
+            
+        case 'usuario':
+            return redirect()->route('cliente.dashboard');
+            
+        default:
+            abort(403, 'Tipo de usuário não reconhecido.');
+    }
+})->name('dashboard');
 
 require __DIR__.'/auth.php';

@@ -1,26 +1,55 @@
 <div class="bg-white rounded-lg shadow-lg p-6">
     {{-- INDICADOR DE PROGRESSO --}}
     <div class="mb-8">
-        <div class="flex items-center justify-center space-x-4">
-            <div class="flex items-center">
+    {{-- Versão Desktop (md e acima) --}}
+    <div class="hidden md:flex items-center justify-center space-x-4">
+        <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full {{ $etapaAtual >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300' }} flex items-center justify-center text-sm font-bold">
+                1
+            </div>
+            <span class="ml-2 text-sm {{ $etapaAtual >= 1 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">Agendamento</span>
+        </div>
+        <div class="w-16 h-1 {{ $etapaAtual >= 2 ? 'bg-blue-600' : 'bg-gray-300' }} rounded"></div>
+        <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full {{ $etapaAtual >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300' }} flex items-center justify-center text-sm font-bold">
+                2
+            </div>
+            <span class="ml-2 text-sm {{ $etapaAtual >= 2 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">Identificação</span>
+        </div>
+        <div class="w-16 h-1 {{ $etapaAtual >= 3 ? 'bg-green-600' : 'bg-gray-300' }} rounded"></div>
+        <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full {{ $etapaAtual >= 3 ? 'bg-green-600 text-white' : 'bg-gray-300' }} flex items-center justify-center text-sm font-bold">
+                3
+            </div>
+            <span class="ml-2 text-sm {{ $etapaAtual >= 3 ? 'text-green-600 font-medium' : 'text-gray-500' }}">Confirmação</span>
+        </div>
+    </div>
+
+    {{-- Versão Mobile (abaixo de md) --}}
+        <div class="md:hidden">
+            <div class="flex items-center justify-center space-x-2 mb-3">
                 <div class="w-8 h-8 rounded-full {{ $etapaAtual >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300' }} flex items-center justify-center text-sm font-bold">
                     1
                 </div>
-                <span class="ml-2 text-sm {{ $etapaAtual >= 1 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">Agendamento</span>
-            </div>
-            <div class="w-16 h-1 {{ $etapaAtual >= 2 ? 'bg-blue-600' : 'bg-gray-300' }} rounded"></div>
-            <div class="flex items-center">
+                <div class="w-8 h-1 {{ $etapaAtual >= 2 ? 'bg-blue-600' : 'bg-gray-300' }} rounded"></div>
                 <div class="w-8 h-8 rounded-full {{ $etapaAtual >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300' }} flex items-center justify-center text-sm font-bold">
                     2
                 </div>
-                <span class="ml-2 text-sm {{ $etapaAtual >= 2 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">Identificação</span>
-            </div>
-            <div class="w-16 h-1 {{ $etapaAtual >= 3 ? 'bg-green-600' : 'bg-gray-300' }} rounded"></div>
-            <div class="flex items-center">
+                <div class="w-8 h-1 {{ $etapaAtual >= 3 ? 'bg-green-600' : 'bg-gray-300' }} rounded"></div>
                 <div class="w-8 h-8 rounded-full {{ $etapaAtual >= 3 ? 'bg-green-600 text-white' : 'bg-gray-300' }} flex items-center justify-center text-sm font-bold">
                     3
                 </div>
-                <span class="ml-2 text-sm {{ $etapaAtual >= 3 ? 'text-green-600 font-medium' : 'text-gray-500' }}">Confirmação</span>
+            </div>
+            <div class="flex justify-between text-xs text-center">
+                <div class="flex-1">
+                    <span class="{{ $etapaAtual >= 1 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">Agendamento</span>
+                </div>
+                <div class="flex-1">
+                    <span class="{{ $etapaAtual >= 2 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">Identificação</span>
+                </div>
+                <div class="flex-1">
+                    <span class="{{ $etapaAtual >= 3 ? 'text-green-600 font-medium' : 'text-gray-500' }}">Confirmação</span>
+                </div>
             </div>
         </div>
     </div>
