@@ -1,5 +1,5 @@
 <div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
-    <h2 class="text-2xl font-bold mb-4">Cadastro de Serviços</h2>
+    <h2 class="text-2xl font-bold mb-4">Painel Administrativo / Cadastro de Serviços</h2>
 
     @if (session()->has('sucesso'))
         <div 

@@ -54,6 +54,17 @@ Route::middleware(['auth'])->group(function () {
 // Rota dashboard - redireciona baseado no tipo de usuário
 Route::middleware(['auth'])->get('/dashboard', function () {
     $user = auth()->user();
+
+    // 🔧 Headers específicos para Edge
+    if (str_contains(request()->userAgent(), 'Edge') || 
+        str_contains(request()->userAgent(), 'Edg/') ||
+        str_contains(request()->userAgent(), 'Trident')) {
+        
+        // Força no-cache para Edge
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+    }
     
     switch ($user->tipo_usuario) {
         case 'admin':

@@ -1,5 +1,5 @@
 <div class="max-w-6xl mx-auto p-6 bg-white rounded shadow">
-    <h2 class="text-2xl font-bold mb-4">⚙️ Configurações de Agendamento</h2>
+    <h2 class="text-2xl font-bold mb-4">Painel Administrativo / Configurações de Agendamento</h2>
 
     <!-- Mensagem de Sucesso -->
     @if (session()->has('sucesso'))

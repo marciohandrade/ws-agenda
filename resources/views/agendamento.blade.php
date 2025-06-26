@@ -12,7 +12,7 @@
                 <i class="fas fa-calendar-plus mr-3"></i>Agendamento Online
             </h1>
             <p class="text-gray-600 text-lg">
-                Escolha o médico, data e horário. É rápido e fácil!
+                Escolha o Serviço | Especialidade, data e horário. É rápido e fácil!
             </p>
         </div>
 

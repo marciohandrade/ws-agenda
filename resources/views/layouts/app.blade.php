@@ -29,7 +29,12 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
+                {{-- Suporte para ambos os formatos --}}
+                @if(isset($slot))
+                    {{ $slot }}
+                @else
+                    @yield('content')
+                @endif
             </main>
         </div>
     </body>
