@@ -1,0 +1,35 @@
+2025-06-28 03:36:11	SERVER -> CLIENT: 220-br1072.hostgator.com.br ESMTP Exim 4.98.1 #2 Sat, 28 Jun 2025 00:36:11 -0300 
+                   	                  220-We do not authorize the use of this system to transport unsolicited, 
+                   	                  220 and/or bulk e-mail.
+2025-06-28 03:36:11	CLIENT -> SERVER: EHLO DESKTOP-OQIVA3F
+2025-06-28 03:36:11	SERVER -> CLIENT: 250-br1072.hostgator.com.br Hello DESKTOP-OQIVA3F [45.187.99.32]
+                   	                  250-SIZE 52428800
+                   	                  250-LIMITS MAILMAX=50 RCPTMAX=50000
+                   	                  250-8BITMIME
+                   	                  250-PIPELINING
+                   	                  250-PIPECONNECT
+                   	                  250-AUTH PLAIN LOGIN
+                   	                  250-STARTTLS
+                   	                  250 HELP
+2025-06-28 03:36:11	CLIENT -> SERVER: STARTTLS
+2025-06-28 03:36:11	SERVER -> CLIENT: 220 TLS go ahead
+2025-06-28 03:36:12	CLIENT -> SERVER: EHLO DESKTOP-OQIVA3F
+2025-06-28 03:36:12	SERVER -> CLIENT: 250-br1072.hostgator.com.br Hello DESKTOP-OQIVA3F [45.187.99.32]
+                   	                  250-SIZE 52428800
+                   	                  250-LIMITS MAILMAX=50 RCPTMAX=50000
+                   	                  250-8BITMIME
+                   	                  250-PIPELINING
+                   	                  250-PIPECONNECT
+                   	                  250-AUTH PLAIN LOGIN
+                   	                  250 HELP
+2025-06-28 03:36:12	CLIENT -> SERVER: AUTH LOGIN
+2025-06-28 03:36:12	SERVER -> CLIENT: 334 VXNlcm5hbWU6
+2025-06-28 03:36:12	CLIENT -> SERVER: [credentials hidden]
+2025-06-28 03:36:12	SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+2025-06-28 03:36:12	CLIENT -> SERVER: [credentials hidden]
+2025-06-28 03:36:17	SERVER -> CLIENT: 535 Incorrect authentication data
+2025-06-28 03:36:17	SMTP ERROR: Password command failed: 535 Incorrect authentication data
+2025-06-28 03:36:17	SMTP Error: Could not authenticate.
+2025-06-28 03:36:17	CLIENT -> SERVER: QUIT
+2025-06-28 03:36:17	SERVER -> CLIENT: 221 br1072.hostgator.com.br closing connection
+2025-06-28 03:36:17	SMTP Error: Could not authenticate.

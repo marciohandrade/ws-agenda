@@ -1,4 +1,6 @@
-<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+
+
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 bg-white rounded shadow">
     <h2 class="text-2xl font-bold mb-4">Painel Administrativo / Cadastro de Serviços</h2>
 
     @if (session()->has('sucesso'))
@@ -48,7 +50,7 @@
             </div>
         </div>
     @endif
-
+    
     <form wire:submit.prevent="salvar" class="w-full space-y-6">
     
         <!-- Linha 1: Nome do Serviço (linha única) -->
