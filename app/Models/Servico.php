@@ -17,11 +17,11 @@ class Servico extends Model
     /**
      * Os atributos que podem ser atribuídos em massa.
      */
-    protected $fillable = [
+   protected $fillable = [
         'nome',
         'descricao',
-        'preco',
-        'duracao',
+        'preco', 
+        'duracao_minutos',  // ← Correto!
         'ativo',
     ];
 
@@ -30,7 +30,7 @@ class Servico extends Model
      */
     protected $casts = [
         'preco' => 'decimal:2',
-        'duracao' => 'integer',
+        'duracao_minutos' => 'integer',  // ← Correto!
         'ativo' => 'boolean',
     ];
 
@@ -48,6 +48,11 @@ class Servico extends Model
     public function getPrecoFormatadoAttribute()
     {
         return 'R$ ' . number_format($this->preco, 2, ',', '.');
+    }
+
+    public function agendamentos()
+    {
+        return $this->hasMany(\App\Models\Agendamento::class, 'servico_id');
     }
 
     /**

@@ -12,7 +12,7 @@ class Servicos extends Component
 
     public $nome = '';
     public $descricao = '';
-    public $duracao_minutos = 60;
+    public $duracao_minutos = '';  // ✅ Removido valor padrão fixo
     public $preco = '';
     public $ativo = true;
     
@@ -38,6 +38,12 @@ class Servicos extends Component
         'preco.regex' => 'O preço deve estar no formato correto (ex: 150,00 ou 1.500,50).',
     ];
 
+    // ✅ INTERCEPTA MUDANÇAS E CONVERTE AUTOMATICAMENTE
+    public function updatedDuracaoMinutos($value)
+    {
+        $this->duracao_minutos = (int) $value;
+    }
+
     public function render()
     {
         $servicos = Servico::query()
@@ -49,7 +55,7 @@ class Servicos extends Component
             ->paginate(10);
 
         return view('livewire.painel.servicos', compact('servicos'))
-            ->layout('layouts.app'); // ✅ Mesmo padrão do ClienteCrud
+            ->layout('layouts.app');
     }
 
     public function abrirModal()
@@ -68,6 +74,9 @@ class Servicos extends Component
     {
         $this->validate();
 
+        // ✅ CONVERSÃO MANUAL PARA GARANTIR TIPO CORRETO
+        $duracaoInt = (int) $this->duracao_minutos;
+
         // Converter preço brasileiro para formato do banco
         $precoFormatado = null;
         if ($this->preco) {
@@ -79,7 +88,7 @@ class Servicos extends Component
         $dados = [
             'nome' => $this->nome,
             'descricao' => $this->descricao,
-            'duracao_minutos' => $this->duracao_minutos,
+            'duracao_minutos' => $duracaoInt, // ✅ GARANTIDO COMO INTEGER
             'preco' => $precoFormatado,
             'ativo' => $this->ativo
         ];
@@ -88,12 +97,16 @@ class Servicos extends Component
             $servico = Servico::find($this->servicoId);
             $servico->update($dados);
             session()->flash('sucesso', 'Serviço atualizado com sucesso!');
+            
+            // ✅ LIMPA OS CAMPOS APÓS ATUALIZAR
+            $this->resetarFormulario();
         } else {
             Servico::create($dados);
             session()->flash('sucesso', 'Serviço cadastrado com sucesso!');
+            
+            // ✅ LIMPA OS CAMPOS APÓS CRIAR
+            $this->resetarFormulario();
         }
-
-        $this->resetarFormulario();
     }
 
     public function editar($id)
@@ -143,7 +156,7 @@ class Servicos extends Component
     {
         $this->nome = '';
         $this->descricao = '';
-        $this->duracao_minutos = 60;
+        $this->duracao_minutos = '';  // ✅ Não força mais 60
         $this->preco = '';
         $this->ativo = true;
         $this->editando = false;

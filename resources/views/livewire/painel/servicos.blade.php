@@ -163,7 +163,11 @@
                             <td class="p-2">{{ Str::limit($servico->descricao, 50) }}</td>
                             <td class="p-2">
                                 <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                    {{ $servico->duracao_formatada }}
+                                    @if($servico->duracao_minutos)
+                                        {{ $servico->duracao_minutos }} min
+                                    @else
+                                        Não definida
+                                    @endif
                                 </span>
                             </td>
                             <td class="p-2">{{ $servico->preco_formatado }}</td>
