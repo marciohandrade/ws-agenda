@@ -14,17 +14,17 @@ Route::get('/', function () {
     return view('index');
 });
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-->name('dashboard');
+Route::get('/register', function () {
+    return redirect()->route('login')->with('info', 'O registro público foi desabilitado. Entre em contato com o administrador para criar uma conta.');
+})->name('register.disabled');
+
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
-->name('profile');
-
+    ->name('profile');
 
 //============================================
-// Rota para agendamento online
+// Rota para agendamento online (público)
 Route::get('/agendar', function () {
     return view('agendamento');
 })->name('agendar');
@@ -34,24 +34,51 @@ Route::get('/agendar', function () {
     return view('pages.cadastro-publico');
 }); */
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/painel/clientes', ClienteCrud::class)
-    ->name('clientes.index');
-    // Gestão de Serviços
-    Route::get('/painel/servicos', Servicos::class)
-    ->name('servicos.index');    
-    // Gestão de Agendamentos
-    Route::get('painel/agendamentos', Agendamentos::class)
-    ->name('agendamentos.index');
-    // configurações e agendamento
-     Route::get('/painel/configuracoes-agendamento', ConfiguracoesAgendamento::class)
-    ->name('configuracoes-agendamento.index');
+//============================================
+// ROTAS PROTEGIDAS - PAINEL ADMINISTRATIVO
+//============================================
 
-    /* Route::get('/painel/dashboard-agendamentos', DashboardAgendamentos::class); */
+// Rotas para Admin e Colaborador
+Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
+    Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
+    Route::get('/servicos', Servicos::class)->name('servicos.index');
+    Route::get('/agendamentos', \App\Livewire\Painel\Agendamentos::class)->name('agendamentos.index');
+    Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
+
+
+ });
+
+    /* Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
+        Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
+        Route::get('/servicos', Servicos::class)->name('servicos.index');
+        Route::get('/agendamentos', \App\Livewire\Painel\Agendamentos::class)->name('agendamentos.index');
+        Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
+        
+        // Route::get('/dashboard-agendamentos', DashboardAgendamentos::class);
+    }); */
+
+    //Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
     
+    // Route::get('/dashboard-agendamentos', DashboardAgendamentos::class);
+
+
+// Rotas exclusivas para SUPER ADMIN
+Route::middleware(['auth', 'check.role:super_admin'])->prefix('admin')->group(function () {
+    // Gestão de Usuários (criar interface depois)
+    // Route::get('/usuarios', [UserController::class, 'index'])->name('admin.usuarios.index');
+    // Route::get('/usuarios/criar', [UserController::class, 'create'])->name('admin.usuarios.create');
+    // Route::post('/usuarios', [UserController::class, 'store'])->name('admin.usuarios.store');
+    // Route::get('/usuarios/{user}/editar', [UserController::class, 'edit'])->name('admin.usuarios.edit');
+    // Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('admin.usuarios.update');
+    // Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->middleware('protect.super.admin')->name('admin.usuarios.destroy');
+    
+    // Configurações do Sistema
+    // Route::get('/configuracoes', [SystemController::class, 'index'])->name('admin.configuracoes.index');
 });
 
-// Rota dashboard - redireciona baseado no tipo de usuário
+//============================================
+// DASHBOARD - REDIRECIONAMENTO INTELIGENTE
+//============================================
 Route::middleware(['auth'])->get('/dashboard', function () {
     $user = auth()->user();
 
@@ -67,9 +94,10 @@ Route::middleware(['auth'])->get('/dashboard', function () {
     }
     
     switch ($user->tipo_usuario) {
+        case 'super_admin':
         case 'admin':
         case 'colaborador':
-            return redirect()->route('painel.agendamentos.index');
+            return redirect()->route('agendamentos.index');
             
         case 'usuario':
             return redirect()->route('cliente.dashboard');
@@ -78,5 +106,14 @@ Route::middleware(['auth'])->get('/dashboard', function () {
             abort(403, 'Tipo de usuário não reconhecido.');
     }
 })->name('dashboard');
+
+//============================================
+// ROTAS DE CLIENTE (para usuários comuns)
+//============================================
+Route::middleware(['auth', 'check.role:usuario'])->prefix('cliente')->group(function () {
+    // Route::get('/dashboard', [ClienteController::class, 'dashboard'])->name('cliente.dashboard');
+    // Route::get('/agendamentos', [ClienteController::class, 'agendamentos'])->name('cliente.agendamentos');
+    // Route::get('/perfil', [ClienteController::class, 'perfil'])->name('cliente.perfil');
+});
 
 require __DIR__.'/auth.php';

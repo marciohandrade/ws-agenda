@@ -1,8 +1,8 @@
 <?php
-
 use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use App\Services\CustomPasswordResetService;
 
 new #[Layout('layouts.guest')] class extends Component
 {
@@ -17,22 +17,21 @@ new #[Layout('layouts.guest')] class extends Component
             'email' => ['required', 'string', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $this->only('email')
-        );
+        // Usar nosso serviço personalizado com PHPMailer
+        $resetService = new CustomPasswordResetService();
+        $result = $resetService->sendPasswordResetEmail($this->email);
 
-        if ($status != Password::RESET_LINK_SENT) {
-            $this->addError('email', __($status));
-
-            return;
+        if ($result['success']) {
+            $this->reset('email');
+            session()->flash('status', __('passwords.sent'));
+        } else {
+            // Se for usuário não encontrado, usar a chave de tradução
+            if (str_contains($result['message'], 'não encontrado')) {
+                $this->addError('email', __('passwords.user'));
+            } else {
+                $this->addError('email', $result['message']);
+            }
         }
-
-        $this->reset('email');
-
-        session()->flash('status', __($status));
     }
 }; ?>
 
@@ -54,7 +53,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         <div class="flex items-center justify-end mt-4">
             <x-primary-button>
-                {{ __('Email Password Reset Link') }}
+                {{ __('Enviar Link de Redefinição') }}
             </x-primary-button>
         </div>
     </form>

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -52,6 +54,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Verificar se é super admin
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->tipo_usuario === 'super_admin';
+    }
+
+    /**
      * Verificar se o usuário é admin
      */
     public function isAdmin(): bool
@@ -80,15 +90,20 @@ class User extends Authenticatable
      */
     public function canAccessAdmin(): bool
     {
-        return in_array($this->tipo_usuario, ['admin', 'colaborador']);
+        return in_array($this->tipo_usuario, ['super_admin', 'admin', 'colaborador']);
     }
 
     /**
      * Verificar se o usuário pode ser deletado
-     * (Prevenção para não deletar o último admin)
+     * (Prevenção para não deletar o último admin ou super admin)
      */
     public function isDeletable(): bool
     {
+        // Super admin nunca pode ser deletado
+        if ($this->isSuperAdmin()) {
+            return false;
+        }
+
         // Se não for admin, pode ser deletado
         if (!$this->isAdmin()) {
             return true;
@@ -106,12 +121,24 @@ class User extends Authenticatable
     {
         parent::boot();
 
-        // Proteção contra exclusão do último admin
+        // Proteção contra exclusão do último admin ou super admin
         static::deleting(function ($user) {
             if (!$user->isDeletable()) {
-                throw new \Exception('Não é possível excluir o último administrador do sistema.');
+                if ($user->isSuperAdmin()) {
+                    throw new \Exception('Super administrador não pode ser excluído.');
+                } else {
+                    throw new \Exception('Não é possível excluir o último administrador do sistema.');
+                }
             }
         });
+    }
+
+    /**
+     * Scope para buscar apenas super admins
+     */
+    public function scopeSuperAdmins($query)
+    {
+        return $query->where('tipo_usuario', 'super_admin');
     }
 
     /**
@@ -143,6 +170,23 @@ class User extends Authenticatable
      */
     public function scopeAdminAccess($query)
     {
-        return $query->whereIn('tipo_usuario', ['admin', 'colaborador']);
+        return $query->whereIn('tipo_usuario', ['super_admin', 'admin', 'colaborador']);
+    }
+
+    /**
+     * Scope para buscar apenas usuários que podem ser gerenciados
+     */
+    public function scopeManageable($query)
+    {
+        $currentUser = auth()->user();
+        
+        if ($currentUser && $currentUser->isSuperAdmin()) {
+            // Super admin vê todos, exceto outros super admins
+            return $query->where('tipo_usuario', '!=', 'super_admin')
+                        ->orWhere('id', $currentUser->id);
+        }
+
+        // Outros usuários veem apenas usuários comuns
+        return $query->where('tipo_usuario', 'usuario');
     }
 }

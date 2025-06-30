@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Closure;
@@ -22,6 +21,11 @@ class CheckRole
 
         $user = auth()->user();
 
+        // Super admin tem acesso a tudo
+        if ($user->tipo_usuario === 'super_admin') {
+            return $next($request);
+        }
+
         // Verificar se o usuário tem um dos roles permitidos
         if (!in_array($user->tipo_usuario, $roles)) {
             // Redirecionar baseado no tipo de usuário
@@ -37,11 +41,11 @@ class CheckRole
     private function redirectBasedOnUserType(string $userType): Response
     {
         switch ($userType) {
+            case 'super_admin':
             case 'admin':
             case 'colaborador':
                 // Admin/colaborador já têm acesso ao painel
                 return redirect()->route('agendamentos.index');
-                
             case 'usuario':
             default:
                 // Usuário comum vai para área do cliente (implementar depois)

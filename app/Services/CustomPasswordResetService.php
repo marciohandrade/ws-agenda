@@ -83,8 +83,11 @@ class CustomPasswordResetService
                 ]
             );
 
-            // Gerar URL de reset
-            $resetUrl = url('/reset-password/' . $token . '?email=' . urlencode($email));
+            // Gerar URL de reset usando helper route()
+            $resetUrl = route('password.reset', [
+                'token' => $token,
+                'email' => $email
+            ]);
 
             // Configurar email
             $this->mail->clearAddresses();
@@ -148,15 +151,17 @@ class CustomPasswordResetService
                 </div>
                 <div class='content'>
                     <h2>Olá, {$userName}!</h2>
-                    <p>Você solicitou a redefinição da sua senha. Clique no botão abaixo para criar uma nova senha:</p>
+                    <p>Você está recebendo este email porque recebemos uma solicitação de redefinição de senha para sua conta.</p>
+                    <p>Clique no botão abaixo para redefinir sua senha:</p>
                     <p style='text-align: center;'>
                         <a href='{$resetUrl}' class='button'>Redefinir Senha</a>
                     </p>
-                    <p>Se você não solicitou esta redefinição, ignore este email.</p>
+                    <p>Se você não solicitou esta redefinição, ignore este email. Sua senha permanecerá inalterada.</p>
                     <p><strong>Este link expira em 60 minutos.</strong></p>
                 </div>
                 <div class='footer'>
-                    <p>Link direto: {$resetUrl}</p>
+                    <p>Se você está tendo problemas para clicar no botão, copie e cole o link abaixo no seu navegador:</p>
+                    <p>{$resetUrl}</p>
                 </div>
             </div>
         </body>
