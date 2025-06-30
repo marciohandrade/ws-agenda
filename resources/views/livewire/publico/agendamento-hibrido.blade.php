@@ -70,7 +70,7 @@
             </h2>
 
             <form wire:submit="proximaEtapa" class="space-y-6">
-                {{-- Serviço --}}
+                {{-- ✅ SERVIÇO COM LOADING MELHORADO --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-medical mr-2 text-blue-600"></i>
@@ -78,12 +78,22 @@
                     </label>
                     
                     @if(isset($servicos) && is_array($servicos) && count($servicos) > 0)
-                        <select wire:model="servico_id" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('servico_id') border-red-500 @enderror">
+                        <select wire:model.live="servico_id" 
+                                wire:change="forcarRecargaHorarios"
+                                class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('servico_id') border-red-500 @enderror">
                             <option value="">Selecione um serviço...</option>
                             @foreach($servicos as $servico)
                                 <option value="{{ $servico['id'] }}">{{ $servico['display_completo'] }}</option>
                             @endforeach
                         </select>
+                        
+                        {{-- ✅ LOADING INDICATOR QUANDO SERVIÇO MUDA --}}
+                        <div wire:loading wire:target="servico_id,forcarRecargaHorarios" class="mt-2">
+                            <div class="flex items-center text-blue-600 text-sm">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Atualizando horários disponíveis...
+                            </div>
+                        </div>
                     @else
                         <div class="w-full px-3 py-3 border border-red-300 rounded-lg bg-red-50">
                             <p class="text-red-600 text-sm">❌ Nenhum serviço disponível.</p>
@@ -100,10 +110,14 @@
                             $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
                         @endphp
                         @if($servicoSelecionado && !empty($servicoSelecionado['descricao']))
-                            <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+                            <div class="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                 <p class="text-sm text-blue-700">
                                     <i class="fas fa-info-circle mr-1"></i>
                                     {{ $servicoSelecionado['descricao'] }}
+                                </p>
+                                <p class="text-xs text-blue-600 mt-1">
+                                    ⏱️ Duração: {{ $servicoSelecionado['duracao_formatada'] }} | 
+                                    💰 Valor: {{ $servicoSelecionado['preco_formatado'] }}
                                 </p>
                             </div>
                         @endif
@@ -227,12 +241,22 @@
                     @endif
                 </div>
 
-                {{-- GRADE DE HORÁRIOS --}}
+                {{-- ✅ GRADE DE HORÁRIOS COM MELHORIAS --}}
                 @if($dataSelecionada)
-                    <div wire:loading.class="opacity-50" wire:target="selecionarHorario">
+                    <div wire:loading.class="opacity-50" wire:target="selecionarHorario,carregarHorarios,recarregarHorarios">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-clock mr-2 text-blue-600"></i>
                             Escolha o Horário *
+                            @if($servico_id && isset($servicos))
+                                @php
+                                    $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
+                                @endphp
+                                @if($servicoSelecionado)
+                                    <span class="text-xs text-gray-500 ml-1">
+                                        (Intervalos de {{ $servicoSelecionado['duracao_formatada'] }})
+                                    </span>
+                                @endif
+                            @endif
                         </label>
                         
                         <div class="bg-gray-50 p-4 rounded-lg border">
@@ -241,6 +265,14 @@
                                 <div class="text-center py-8">
                                     <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
                                     <p class="text-gray-600">Carregando horários disponíveis...</p>
+                                    <p class="text-xs text-gray-500 mt-1">Calculando intervalos baseados no serviço selecionado</p>
+                                </div>
+                            @elseif(!$servico_id)
+                                {{-- Nenhum serviço selecionado --}}
+                                <div class="text-center py-8">
+                                    <i class="fas fa-exclamation-circle text-2xl text-orange-500 mb-2"></i>
+                                    <p class="text-gray-600 font-medium">Selecione um serviço primeiro</p>
+                                    <p class="text-sm text-gray-500">Os horários serão calculados baseados na duração do serviço</p>
                                 </div>
                             @elseif(empty($horariosDisponiveis))
                                 {{-- Nenhum horário disponível --}}
@@ -250,6 +282,20 @@
                                     <p class="text-sm text-gray-500">Escolha outra data no calendário</p>
                                 </div>
                             @else
+                                {{-- ✅ INFORMAÇÃO DO INTERVALO ATUAL --}}
+                                @if($servico_id && isset($servicos))
+                                    @php
+                                        $servicoSelecionado = collect($servicos)->firstWhere('id', $servico_id);
+                                    @endphp
+                                    @if($servicoSelecionado)
+                                        <div class="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700 text-center">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Horários organizados com intervalos de {{ $servicoSelecionado['duracao_formatada'] }} 
+                                            para o serviço "{{ $servicoSelecionado['nome'] }}"
+                                        </div>
+                                    @endif
+                                @endif
+                                
                                 {{-- Grade de horários --}}
                                 <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                                     @foreach($horariosDisponiveis as $horario)
@@ -288,6 +334,17 @@
                                         <span class="text-gray-600">Ocupado</span>
                                     </div>
                                 </div>
+                                
+                                {{-- ✅ BOTÃO PARA FORÇAR RECARGA --}}
+                                @if($servico_id)
+                                    <div class="mt-4 text-center">
+                                        <button type="button" 
+                                                wire:click="forcarRecargaHorarios"
+                                                class="text-xs text-blue-600 hover:text-blue-800 underline">
+                                            <i class="fas fa-refresh mr-1"></i>Atualizar horários
+                                        </button>
+                                    </div>
+                                @endif
                             @endif
                         </div>
                         
@@ -580,4 +637,19 @@
         </div>
     </div>
 @endif
+
+{{-- ✅ JAVASCRIPT PARA EVENTS LISTENERS --}}
+<script>
+document.addEventListener('livewire:initialized', () => {
+    // Listener para quando o serviço é alterado
+    Livewire.on('servico-alterado', () => {
+        console.log('Serviço alterado - horários serão recarregados');
+    });
+
+    // Listener para quando os horários são recarregados
+    Livewire.on('horarios-recarregados', () => {
+        console.log('Horários recarregados com sucesso');
+    });
+});
+</script>
 </div>

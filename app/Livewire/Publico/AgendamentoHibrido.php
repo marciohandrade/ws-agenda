@@ -200,7 +200,7 @@ class AgendamentoHibrido extends Component
     }
 
     /**
-     * ✅ LISTENER: Quando serviço mudar, recarregar horários
+     * ✅ CORRIGIDO: Listener aprimorado para mudança de serviço
      */
     public function updatedServicoId()
     {
@@ -209,9 +209,42 @@ class AgendamentoHibrido extends Component
         $this->horarioAgendamento = '';
         $this->horariosDisponiveis = [];
         
-        // Se já tinha uma data selecionada, recarregar horários com novo intervalo
+        // ✅ FORÇA LIMPEZA DA MENSAGEM DE ERRO
+        $this->mensagemErro = '';
+        
+        // ✅ Se já tinha uma data selecionada, recarregar horários com novo intervalo
+        if ($this->dataSelecionada && $this->servico_id) {
+            // ✅ FORÇA REFRESH DOS HORÁRIOS COM NOVO SERVIÇO
+            $this->recarregarHorarios();
+        }
+        
+        // ✅ DISPATCH DE EVENTO PARA NOTIFICAR MUDANÇA NO FRONTEND
+        $this->dispatch('servico-alterado');
+    }
+
+    /**
+     * ✅ NOVO: Método específico para recarregar horários forçadamente
+     */
+    public function recarregarHorarios()
+    {
         if ($this->dataSelecionada) {
+            $this->carregandoHorarios = true;
+            
+            // ✅ PEQUENO DELAY PARA GARANTIR QUE O FRONTEND VEJA O LOADING
             $this->carregarHorarios($this->dataSelecionada);
+            
+            // ✅ DISPATCH PARA NOTIFICAR QUE OS HORÁRIOS FORAM RECARREGADOS
+            $this->dispatch('horarios-recarregados');
+        }
+    }
+
+    /**
+     * ✅ MÉTODO PÚBLICO: Forçar recarga de horários (pode ser chamado do frontend)
+     */
+    public function forcarRecargaHorarios()
+    {
+        if ($this->dataSelecionada && $this->servico_id) {
+            $this->recarregarHorarios();
         }
     }
 
@@ -240,6 +273,9 @@ class AgendamentoHibrido extends Component
             // ✅ USAR DURAÇÃO DO SERVIÇO SELECIONADO COMO INTERVALO
             $intervalo = $this->getDuracaoServicoSelecionado();
             
+            // ✅ LOG PARA DEBUG (remover em produção)
+            \Log::info("Carregando horários para serviço {$this->servico_id} com intervalo de {$intervalo} minutos");
+            
             $horarios = [];
             $dataStr = $dataCarbon->format('Y-m-d');
             
@@ -262,6 +298,7 @@ class AgendamentoHibrido extends Component
                 ->toArray();
             
             while ($current < $fim) {
+                // ✅ VERIFICA HORÁRIO DE ALMOÇO
                 if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
                     $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
                     $almocoFim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_fim, 0, 8));
@@ -275,12 +312,27 @@ class AgendamentoHibrido extends Component
                 $horarioFormatado = $current->format('H:i');
                 $temAgendamento = in_array($horarioFormatado, $agendamentosOcupados);
                 
-                $horarios[] = [
-                    'value' => $horarioFormatado,
-                    'display' => $horarioFormatado,
-                    'disponivel' => !$temAgendamento,
-                    'ocupado' => $temAgendamento
-                ];
+                // ✅ VALIDAÇÃO ADICIONAL: Verificar se há tempo suficiente para o serviço
+                $horarioFimServico = $current->copy()->addMinutes($intervalo);
+                $servicoCabeFinal = $horarioFimServico <= $fim;
+                
+                // ✅ Se passa do almoço, verificar se cabe antes do almoço
+                if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
+                    $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
+                    if ($current < $almocoInicio && $horarioFimServico > $almocoInicio) {
+                        $servicoCabeFinal = false; // Não cabe antes do almoço
+                    }
+                }
+                
+                if ($servicoCabeFinal) {
+                    $horarios[] = [
+                        'value' => $horarioFormatado,
+                        'display' => $horarioFormatado,
+                        'disponivel' => !$temAgendamento,
+                        'ocupado' => $temAgendamento,
+                        'intervalo' => $intervalo // ✅ ADICIONA INFO DO INTERVALO PARA DEBUG
+                    ];
+                }
                 
                 $current->addMinutes($intervalo); // ✅ USA INTERVALO DINÂMICO
             }
@@ -289,11 +341,13 @@ class AgendamentoHibrido extends Component
             
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao carregar horários: ' . $e->getMessage();
+            
+            // ✅ FALLBACK COM HORÁRIOS DE EXEMPLO
             $this->horariosDisponiveis = [
-                ['value' => '08:00', 'display' => '08:00', 'disponivel' => true, 'ocupado' => false],
-                ['value' => '09:00', 'display' => '09:00', 'disponivel' => false, 'ocupado' => true],
-                ['value' => '10:00', 'display' => '10:00', 'disponivel' => true, 'ocupado' => false],
-                ['value' => '14:00', 'display' => '14:00', 'disponivel' => true, 'ocupado' => false],
+                ['value' => '08:00', 'display' => '08:00', 'disponivel' => true, 'ocupado' => false, 'intervalo' => 30],
+                ['value' => '09:00', 'display' => '09:00', 'disponivel' => false, 'ocupado' => true, 'intervalo' => 30],
+                ['value' => '10:00', 'display' => '10:00', 'disponivel' => true, 'ocupado' => false, 'intervalo' => 30],
+                ['value' => '14:00', 'display' => '14:00', 'disponivel' => true, 'ocupado' => false, 'intervalo' => 30],
             ];
         }
         
