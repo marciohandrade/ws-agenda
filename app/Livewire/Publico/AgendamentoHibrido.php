@@ -5,6 +5,7 @@ namespace App\Livewire\Publico;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 use Carbon\Carbon;
@@ -173,7 +174,49 @@ class AgendamentoHibrido extends Component
     }
 
     /**
-     * Carregar horários disponíveis para uma data
+     * ✅ MÉTODO HELPER: Obter duração do serviço selecionado
+     */
+    public function getDuracaoServicoSelecionado()
+    {
+        if (!$this->servico_id) {
+            return 30; // Padrão
+        }
+        
+        try {
+            $servico = DB::table('servicos')
+                ->where('id', $this->servico_id)
+                ->where('ativo', 1)
+                ->first();
+            
+            if ($servico) {
+                // Verifica ambos os nomes de campo para compatibilidade
+                return (int) ($servico->duracao_minutos ?? $servico->duracao ?? 30);
+            }
+        } catch (\Exception $e) {
+            // Em caso de erro, retorna padrão
+        }
+        
+        return 30;
+    }
+
+    /**
+     * ✅ LISTENER: Quando serviço mudar, recarregar horários
+     */
+    public function updatedServicoId()
+    {
+        // Limpar seleções de data/horário quando trocar serviço
+        $this->horarioSelecionado = '';
+        $this->horarioAgendamento = '';
+        $this->horariosDisponiveis = [];
+        
+        // Se já tinha uma data selecionada, recarregar horários com novo intervalo
+        if ($this->dataSelecionada) {
+            $this->carregarHorarios($this->dataSelecionada);
+        }
+    }
+
+    /**
+     * ✅ CORRIGIDO: Carregar horários com intervalo dinâmico baseado no serviço
      */
     public function carregarHorarios($data)
     {
@@ -194,6 +237,9 @@ class AgendamentoHibrido extends Component
                 return;
             }
             
+            // ✅ USAR DURAÇÃO DO SERVIÇO SELECIONADO COMO INTERVALO
+            $intervalo = $this->getDuracaoServicoSelecionado();
+            
             $horarios = [];
             $dataStr = $dataCarbon->format('Y-m-d');
             
@@ -204,7 +250,6 @@ class AgendamentoHibrido extends Component
             $fim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . $horaFim);
             
             $current = $inicio->copy();
-            $intervalo = 30;
             
             $agendamentosOcupados = DB::table('agendamentos')
                 ->where('data_agendamento', $dataStr)
@@ -222,7 +267,7 @@ class AgendamentoHibrido extends Component
                     $almocoFim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_fim, 0, 8));
                     
                     if ($current >= $almocoInicio && $current < $almocoFim) {
-                        $current->addMinutes($intervalo);
+                        $current->addMinutes($intervalo); // ✅ USA INTERVALO DINÂMICO
                         continue;
                     }
                 }
@@ -237,7 +282,7 @@ class AgendamentoHibrido extends Component
                     'ocupado' => $temAgendamento
                 ];
                 
-                $current->addMinutes($intervalo);
+                $current->addMinutes($intervalo); // ✅ USA INTERVALO DINÂMICO
             }
             
             $this->horariosDisponiveis = $horarios;
@@ -295,13 +340,144 @@ class AgendamentoHibrido extends Component
     }
 
     /**
+     * ✅ NOVO: Enviar email de confirmação do agendamento
+     */
+    private function enviarEmailConfirmacao($dadosUsuario, $dadosAgendamento)
+    {
+        try {
+            // Buscar dados do serviço para o email
+            $servico = DB::table('servicos')
+                ->where('id', $this->servico_id)
+                ->first();
+            
+            $nomeServico = $servico ? $servico->nome : 'Serviço';
+            $precoServico = $servico ? 'R$ ' . number_format($servico->preco ?? 0, 2, ',', '.') : '';
+            $duracaoServico = $servico ? ($servico->duracao_minutos ?? $servico->duracao ?? 30) . ' minutos' : '';
+            
+            // Formatação de data e hora para o email
+            $dataFormatada = Carbon::parse($this->dataAgendamento)->format('d/m/Y');
+            $horarioFormatado = $this->horarioAgendamento;
+            
+            // Dados para o template do email
+            $dadosEmail = [
+                'nomeCliente' => $dadosUsuario['nome'],
+                'emailCliente' => $dadosUsuario['email'],
+                'nomeServico' => $nomeServico,
+                'precoServico' => $precoServico,
+                'duracaoServico' => $duracaoServico,
+                'dataAgendamento' => $dataFormatada,
+                'horarioAgendamento' => $horarioFormatado,
+                'observacoes' => $this->observacoes ?: 'Nenhuma observação',
+                'agendamentoId' => $this->agendamentoId,
+                'status' => 'Pendente'
+            ];
+            
+            // Enviar email usando template simples
+            Mail::send([], [], function ($message) use ($dadosEmail) {
+                $message->to($dadosEmail['emailCliente'], $dadosEmail['nomeCliente'])
+                    ->subject('Confirmação de Agendamento - Status Pendente')
+                    ->html($this->criarTemplateEmail($dadosEmail));
+            });
+            
+        } catch (\Exception $e) {
+            // Log do erro, mas não quebra o fluxo
+            \Log::error('Erro ao enviar email de confirmação: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ✅ NOVO: Criar template HTML para o email de confirmação
+     */
+    private function criarTemplateEmail($dados)
+    {
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <title>Confirmação de Agendamento</title>
+        </head>
+        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
+            
+            <div style='background-color: #f8f9fa; padding: 30px; border-radius: 10px; border-left: 5px solid #28a745;'>
+                <h1 style='color: #28a745; margin-bottom: 20px;'>✅ Agendamento Realizado com Sucesso!</h1>
+                
+                <p style='font-size: 16px; margin-bottom: 25px;'>
+                    Olá <strong>{$dados['nomeCliente']}</strong>,
+                </p>
+                
+                <p style='font-size: 14px; margin-bottom: 25px;'>
+                    Seu agendamento foi realizado com sucesso e está com status <strong style='color: #ffc107;'>PENDENTE</strong>. 
+                    Em breve nossa equipe irá confirmar seu agendamento através do painel administrativo.
+                </p>
+                
+                <div style='background-color: white; padding: 20px; border-radius: 8px; margin: 25px 0;'>
+                    <h3 style='color: #495057; margin-bottom: 15px; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;'>
+                        📋 Detalhes do seu agendamento:
+                    </h3>
+                    
+                    <table style='width: 100%; border-collapse: collapse;'>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>🔹 Agendamento #:</td>
+                            <td style='padding: 8px 0;'>{$dados['agendamentoId']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>🏥 Serviço:</td>
+                            <td style='padding: 8px 0;'>{$dados['nomeServico']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>💰 Valor:</td>
+                            <td style='padding: 8px 0;'>{$dados['precoServico']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>⏱️ Duração:</td>
+                            <td style='padding: 8px 0;'>{$dados['duracaoServico']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>📅 Data:</td>
+                            <td style='padding: 8px 0;'>{$dados['dataAgendamento']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>🕐 Horário:</td>
+                            <td style='padding: 8px 0;'>{$dados['horarioAgendamento']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>📝 Observações:</td>
+                            <td style='padding: 8px 0;'>{$dados['observacoes']}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; font-weight: bold; color: #6c757d;'>📊 Status:</td>
+                            <td style='padding: 8px 0;'><span style='background-color: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 12px;'>{$dados['status']}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div style='background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 5px; margin: 25px 0;'>
+                    <h4 style='margin: 0 0 10px 0;'>ℹ️ Próximos passos:</h4>
+                    <ul style='margin: 0; padding-left: 20px;'>
+                        <li>Aguarde a confirmação da nossa equipe</li>
+                        <li>Você receberá um novo email quando o status for atualizado</li>
+                        <li>Em caso de dúvidas, entre em contato conosco</li>
+                    </ul>
+                </div>
+                
+                <div style='margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 12px;'>
+                    <p style='margin: 0;'>
+                        Este é um email automático, não é necessário responder.<br>
+                        Agendamento realizado em " . now()->format('d/m/Y H:i') . "
+                    </p>
+                </div>
+            </div>
+            
+        </body>
+        </html>";
+    }
+
+    /**
      * Cadastro unificado: Usuário + Cliente + Agendamento
      */
-    /**
- * Cadastro unificado: Usuário + Cliente + Agendamento
- */
-public function fazerCadastroUnificado()
-{
+    public function fazerCadastroUnificado()
+    {
         $this->carregando = true;
         $this->mensagemErro = '';
         
@@ -385,22 +561,27 @@ public function fazerCadastroUnificado()
                 Auth::loginUsingId($userId);
             });
             
+            // ✅ ENVIAR EMAIL DE CONFIRMAÇÃO
+            $this->enviarEmailConfirmacao([
+                'nome' => $this->nome,
+                'email' => $this->email
+            ], [
+                'agendamento_id' => $this->agendamentoId
+            ]);
+            
             $this->etapaAtual = 3;
-            $this->mensagemSucesso = 'Agendamento realizado com sucesso! Sua conta foi criada e você já está logado no sistema.';
+            $this->mensagemSucesso = 'Agendamento realizado com sucesso! Sua conta foi criada e você já está logado no sistema. Um email de confirmação foi enviado para ' . $this->email;
             
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao processar agendamento: ' . $e->getMessage();
         }
         
         $this->carregando = false;
-}
+    }
 
     /**
      * Finalizar agendamento (para login existente)
      */
-    /**
- * Finalizar agendamento (para login existente)
- */
     private function finalizarAgendamento()
     {
         try {
@@ -561,15 +742,18 @@ public function fazerCadastroUnificado()
             
             if ($servicosDB->count() > 0) {
                 $this->servicos = $servicosDB->map(function ($servico) {
+                    // ✅ COMPATIBILIDADE COM AMBOS OS CAMPOS
+                    $duracao = $servico->duracao_minutos ?? $servico->duracao ?? 30;
+                    
                     return [
                         'id' => $servico->id,
                         'nome' => $servico->nome,
                         'descricao' => $servico->descricao ?? '',
                         'preco' => $servico->preco ?? 0,
-                        'duracao' => $servico->duracao ?? 30,
+                        'duracao' => $duracao,
                         'preco_formatado' => 'R$ ' . number_format($servico->preco ?? 0, 2, ',', '.'),
-                        'duracao_formatada' => ($servico->duracao ?? 30) . ' min',
-                        'display_completo' => $servico->nome . ' - R$ ' . number_format($servico->preco ?? 0, 2, ',', '.') . ' (' . ($servico->duracao ?? 30) . ' min)'
+                        'duracao_formatada' => $duracao . ' min',
+                        'display_completo' => $servico->nome . ' - R$ ' . number_format($servico->preco ?? 0, 2, ',', '.') . ' (' . $duracao . ' min)'
                     ];
                 })->toArray();
             } else {

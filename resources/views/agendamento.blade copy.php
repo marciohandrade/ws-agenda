@@ -41,7 +41,7 @@
                     <div class="flex flex-col items-center">
                         <i class="fas fa-mobile-alt text-3xl text-blue-600 mb-2"></i>
                         <h4 class="font-semibold mb-1">Confirmação Imediata</h4>
-                        <p class="text-sm text-gray-600">Receba confirmação por SMS</p>
+                        <p class="text-sm text-gray-600">Receba confirmação por E-mail</p>
                     </div>
                 </div>
             </div>
