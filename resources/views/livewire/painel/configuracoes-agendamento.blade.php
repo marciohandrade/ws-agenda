@@ -63,8 +63,8 @@
                 <h3 class="text-lg font-semibold mb-4">📋 Perfil de Configuração</h3>
                 <div class="flex flex-wrap gap-4">
                     <div class="flex-1 min-w-[250px]">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Perfil de Usuário</label>
-                        <select wire:model.live="perfil_ativo" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Perfil de Usuário</label>
+                        <select wire:model.live="perfil_ativo" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             @foreach(\App\Models\ConfiguracaoAgendamento::PERFIS as $valor => $label)
                                 <option value="{{ $valor }}">{{ $label }}</option>
                             @endforeach
@@ -133,16 +133,25 @@
                                     <h5 class="font-semibold text-lg">{{ $dia['nome'] }}</h5>
                                 </div>
                                 
-                                <!-- Toggle Ativo/Inativo -->
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" 
-                                           wire:model.live="horarios_especificos.{{ $numero }}.ativo" 
-                                           class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-{{ $dia['cor'] }}-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-{{ $dia['cor'] }}-600"></div>
-                                    <span class="ml-3 text-sm font-medium {{ $isAtivo ? 'text-'.$dia['cor'].'-700' : 'text-gray-500' }}">
-                                        {{ $isAtivo ? 'Aberto' : 'Fechado' }}
-                                    </span>
-                                </label>
+                                <!-- Option Buttons Aberto/Fechado -->
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-gray-700 mr-2">Status:</span>
+                                    <div class="flex rounded-lg border border-gray-300 overflow-hidden">
+                                        <!-- Botão Aberto -->
+                                        <button type="button" 
+                                                wire:click="$set('horarios_especificos.{{ $numero }}.ativo', true)"
+                                                class="px-4 py-2 text-sm font-medium transition-all duration-200 {{ $isAtivo ? 'bg-green-500 text-white border-green-500' : 'bg-white text-green-600 hover:bg-green-50 border-gray-300' }}">
+                                            🟢 Aberto
+                                        </button>
+                                        
+                                        <!-- Botão Fechado -->
+                                        <button type="button" 
+                                                wire:click="$set('horarios_especificos.{{ $numero }}.ativo', false)"
+                                                class="px-4 py-2 text-sm font-medium transition-all duration-200 border-l {{ !$isAtivo ? 'bg-red-500 text-white border-red-500' : 'bg-white text-red-600 hover:bg-red-50 border-gray-300' }}">
+                                            🔴 Fechado
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             
                             @if($isAtivo)
@@ -155,7 +164,7 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">⏰ Abertura</label>
                                             <input type="time" 
                                                    wire:model="horarios_especificos.{{ $numero }}.horario_inicio" 
-                                                   class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-{{ $dia['cor'] }}-500 focus:border-transparent">
+                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                             @error("horarios_especificos.{$numero}.horario_inicio") 
                                                 <span class="text-red-500 text-xs">{{ $message }}</span> 
                                             @enderror
@@ -164,7 +173,7 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">🔚 Fechamento</label>
                                             <input type="time" 
                                                    wire:model="horarios_especificos.{{ $numero }}.horario_fim" 
-                                                   class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-{{ $dia['cor'] }}-500 focus:border-transparent">
+                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                             @error("horarios_especificos.{$numero}.horario_fim") 
                                                 <span class="text-red-500 text-xs">{{ $message }}</span> 
                                             @enderror
@@ -173,29 +182,41 @@
 
                                     <!-- Horário de Almoço -->
                                     <div class="border-t pt-3">
-                                        <label class="flex items-center cursor-pointer mb-2">
-                                            <input type="checkbox" 
-                                                   wire:model="horarios_especificos.{{ $numero }}.tem_almoco" 
-                                                   class="mr-2 text-{{ $dia['cor'] }}-600 focus:ring-{{ $dia['cor'] }}-500">
-                                            <span class="text-sm font-medium">🍽️ Pausa para almoço</span>
-                                        </label>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm font-medium">🍽️ Pausa para almoço:</span>
+                                            <div class="flex rounded-lg border border-gray-300 overflow-hidden">
+                                                <!-- Botão Sim -->
+                                                <button type="button" 
+                                                        wire:click="$set('horarios_especificos.{{ $numero }}.tem_almoco', true)"
+                                                        class="px-3 py-1 text-xs font-medium transition-all duration-200 {{ isset($horarios_especificos[$numero]['tem_almoco']) && $horarios_especificos[$numero]['tem_almoco'] ? 'bg-yellow-500 text-white' : 'bg-white text-yellow-600 hover:bg-yellow-50' }}">
+                                                    ✓ Sim
+                                                </button>
+                                                
+                                                <!-- Botão Não -->
+                                                <button type="button" 
+                                                        wire:click="$set('horarios_especificos.{{ $numero }}.tem_almoco', false)"
+                                                        class="px-3 py-1 text-xs font-medium transition-all duration-200 border-l {{ !isset($horarios_especificos[$numero]['tem_almoco']) || !$horarios_especificos[$numero]['tem_almoco'] ? 'bg-gray-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">
+                                                    ✕ Não
+                                                </button>
+                                            </div>
+                                        </div>
                                         
                                         @if(isset($horarios_especificos[$numero]['tem_almoco']) && $horarios_especificos[$numero]['tem_almoco'])
                                             <div class="grid grid-cols-2 gap-3 bg-yellow-50 p-3 rounded">
                                                 <div>
-                                                    <label class="block text-xs font-medium text-gray-600 mb-1">🍽️ Início almoço</label>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">🍽️ Início almoço</label>
                                                     <input type="time" 
                                                            wire:model="horarios_especificos.{{ $numero }}.almoco_inicio" 
-                                                           class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-yellow-500">
+                                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                                     @error("horarios_especificos.{$numero}.almoco_inicio") 
                                                         <span class="text-red-500 text-xs">{{ $message }}</span> 
                                                     @enderror
                                                 </div>
                                                 <div>
-                                                    <label class="block text-xs font-medium text-gray-600 mb-1">🔚 Fim almoço</label>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">🔚 Fim almoço</label>
                                                     <input type="time" 
                                                            wire:model="horarios_especificos.{{ $numero }}.almoco_fim" 
-                                                           class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-yellow-500">
+                                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                                     @error("horarios_especificos.{$numero}.almoco_fim") 
                                                         <span class="text-red-500 text-xs">{{ $message }}</span> 
                                                     @enderror
@@ -269,8 +290,8 @@
                 <h3 class="text-lg font-semibold mb-4">📋 Perfil de Configuração</h3>
                 <div class="flex flex-wrap gap-4">
                     <div class="flex-1 min-w-[250px]">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Perfil de Usuário</label>
-                        <select wire:model.live="perfil_ativo" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Perfil de Usuário</label>
+                        <select wire:model.live="perfil_ativo" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             @foreach(\App\Models\ConfiguracaoAgendamento::PERFIS as $valor => $label)
                                 <option value="{{ $valor }}">{{ $label }}</option>
                             @endforeach
@@ -285,12 +306,12 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
                             🚀 Antecedência Mínima (horas)
                         </label>
                         <input type="number" 
                                wire:model="antecedencia_minima_horas" 
-                               class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                min="1" max="72" step="1">
                         @error('antecedencia_minima_horas') 
                             <span class="text-red-500 text-sm">{{ $message }}</span> 
@@ -301,12 +322,12 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
                             📅 Antecedência Máxima (dias)
                         </label>
                         <input type="number" 
                                wire:model="antecedencia_maxima_dias" 
-                               class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                min="1" max="365" step="1">
                         @error('antecedencia_maxima_dias') 
                             <span class="text-red-500 text-sm">{{ $message }}</span> 
@@ -332,17 +353,31 @@
             <div class="bg-green-50 p-6 rounded-lg border border-green-200">
                 <h3 class="text-lg font-semibold mb-4">🔧 Status da Configuração</h3>
                 
-                <div class="flex items-center">
-                    <input type="checkbox" 
-                           wire:model="configuracao_ativa" 
-                           class="mr-3 w-4 h-4 text-green-600 focus:ring-green-500 rounded">
-                    <label class="text-sm font-medium">
-                        ✅ Configuração ativa para este perfil
-                    </label>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm font-medium">
+                            Configuração para este perfil:
+                        </span>
+                        <small class="text-gray-600 text-xs block mt-1">
+                            ⚠️ Controle se esta configuração está ativa ou não
+                        </small>
+                    </div>
+                    <div class="flex rounded-lg border border-gray-300 overflow-hidden">
+                        <!-- Botão Ativa -->
+                        <button type="button" 
+                                wire:click="$set('configuracao_ativa', true)"
+                                class="px-4 py-2 text-sm font-medium transition-all duration-200 {{ $configuracao_ativa ? 'bg-green-500 text-white' : 'bg-white text-green-600 hover:bg-green-50' }}">
+                            ✅ Ativa
+                        </button>
+                        
+                        <!-- Botão Inativa -->
+                        <button type="button" 
+                                wire:click="$set('configuracao_ativa', false)"
+                                class="px-4 py-2 text-sm font-medium transition-all duration-200 border-l {{ !$configuracao_ativa ? 'bg-red-500 text-white' : 'bg-white text-red-600 hover:bg-red-50' }}">
+                            ❌ Inativa
+                        </button>
+                    </div>
                 </div>
-                <small class="text-gray-600 text-xs block mt-1">
-                    ⚠️ Desmarque para desativar temporariamente esta configuração
-                </small>
             </div>
 
             <!-- Botão Salvar -->
@@ -486,8 +521,8 @@
                         
                         <!-- Tipo de Bloqueio -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">🚫 Tipo de Bloqueio *</label>
-                            <select wire:model="tipo_bloqueio" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">🚫 Tipo de Bloqueio *</label>
+                            <select wire:model="tipo_bloqueio" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                 <option value="">Selecione o tipo</option>
                                 <option value="dia_completo">📅 Dia Completo</option>
                                 <option value="periodo">📆 Período (múltiplos dias)</option>
@@ -499,18 +534,18 @@
                         <!-- Datas -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">📅 Data de Início *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">📅 Data de Início *</label>
                                 <input type="date" wire:model="data_inicio_bloqueio" 
-                                       class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent" 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                        min="{{ date('Y-m-d') }}">
                                 @error('data_inicio_bloqueio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             @if($tipo_bloqueio === 'periodo')
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">📅 Data de Fim *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">📅 Data de Fim *</label>
                                     <input type="date" wire:model="data_fim_bloqueio" 
-                                           class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     @error('data_fim_bloqueio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
                             @endif
@@ -520,16 +555,16 @@
                         @if($tipo_bloqueio === 'horario_especifico')
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">⏰ Horário de Início *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">⏰ Horário de Início *</label>
                                     <input type="time" wire:model="horario_inicio_bloqueio" 
-                                           class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     @error('horario_inicio_bloqueio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">🔚 Horário de Fim *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">🔚 Horário de Fim *</label>
                                     <input type="time" wire:model="horario_fim_bloqueio" 
-                                           class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     @error('horario_fim_bloqueio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -537,41 +572,72 @@
 
                         <!-- Motivo -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">📝 Motivo *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">📝 Motivo *</label>
                             <input type="text" wire:model="motivo_bloqueio" 
-                                   class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent" 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                    placeholder="Ex: Feriado Nacional, Férias, Manutenção...">
                             @error('motivo_bloqueio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Observações -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">💬 Observações</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">💬 Observações</label>
                             <textarea wire:model="observacoes_bloqueio" 
-                                      class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent" 
+                                      class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                       rows="2" 
                                       placeholder="Informações adicionais..."></textarea>
                         </div>
 
-                        <!-- Recorrente -->
-                        <div class="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <input type="checkbox" wire:model="recorrente_bloqueio" 
-                                   class="mr-3 w-4 h-4 text-blue-600 focus:ring-blue-500 rounded">
+                        <!-- Recorrente - OPTION BUTTONS -->
+                        <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <div>
-                                <label class="text-sm font-medium">🔄 Bloqueio recorrente (anual)</label>
+                                <label class="text-sm font-medium">🔄 Bloqueio recorrente (anual):</label>
                                 <p class="text-xs text-gray-600">Para feriados que se repetem todo ano (ex: Natal, Ano Novo)</p>
+                            </div>
+                            <div class="flex rounded-lg border border-gray-300 overflow-hidden">
+                                <!-- Botão Sim -->
+                                <button type="button" 
+                                        wire:click="$set('recorrente_bloqueio', true)"
+                                        class="px-3 py-2 text-sm font-medium transition-all duration-200 {{ $recorrente_bloqueio ? 'bg-blue-500 text-white' : 'bg-white text-blue-600 hover:bg-blue-50' }}">
+                                    🔄 Sim
+                                </button>
+                                
+                                <!-- Botão Não -->
+                                <button type="button" 
+                                        wire:click="$set('recorrente_bloqueio', false)"
+                                        class="px-3 py-2 text-sm font-medium transition-all duration-200 border-l {{ !$recorrente_bloqueio ? 'bg-gray-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">
+                                    ❌ Não
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Perfis Afetados -->
+                        <!-- Perfis Afetados - CARDS MODERNIZADOS -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">👥 Perfis Afetados *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">👥 Perfis Afetados *</label>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                                 @foreach(\App\Models\ConfiguracaoAgendamento::PERFIS as $valor => $label)
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors {{ in_array($valor, $perfis_afetados ?? []) ? 'border-red-300 bg-red-50' : 'border-gray-200' }}">
+                                    @php
+                                        $isSelected = in_array($valor, $perfis_afetados ?? []);
+                                    @endphp
+                                    <label class="relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 {{ $isSelected ? 'border-red-400 bg-red-50 shadow-md' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50' }}">
                                         <input type="checkbox" wire:model="perfis_afetados" value="{{ $valor }}" 
-                                               class="mr-2 w-4 h-4 text-red-600 focus:ring-red-500 rounded">
-                                        <span class="text-sm">{{ $label }}</span>
+                                               class="sr-only peer">
+                                        
+                                        <!-- Indicador visual personalizado -->
+                                        <div class="flex-shrink-0 w-5 h-5 mr-3 rounded border-2 {{ $isSelected ? 'bg-red-500 border-red-500' : 'bg-white border-gray-300' }} flex items-center justify-center transition-all duration-200">
+                                            @if($isSelected)
+                                                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            @endif
+                                        </div>
+                                        
+                                        <span class="text-sm font-medium {{ $isSelected ? 'text-red-800' : 'text-gray-700' }}">{{ $label }}</span>
+                                        
+                                        <!-- Badge selecionado -->
+                                        @if($isSelected)
+                                            <span class="ml-auto bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">✓</span>
+                                        @endif
                                     </label>
                                 @endforeach
                             </div>

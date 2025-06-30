@@ -1,6 +1,4 @@
-
-
-    <div class="max-w-6xl mx-auto p-4 sm:p-6 bg-white rounded shadow">
+<div class="max-w-6xl mx-auto p-4 sm:p-6 bg-white rounded shadow">
     <h2 class="text-2xl font-bold mb-4">Painel Administrativo / Cadastro de Serviços</h2>
 
     @if (session()->has('sucesso'))
@@ -55,24 +53,24 @@
     
         <!-- Linha 1: Nome do Serviço (linha única) -->
         <div class="flex flex-col">
-            <label>Nome do Serviço</label>
-            <input type="text" wire:model="nome" class="w-full border rounded p-2" placeholder="Ex: Consulta, Retorno, Exame...">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Serviço</label>
+            <input type="text" wire:model="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Consulta, Retorno, Exame...">
             @error('nome') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
-        <!-- Linha 2: Duração e Preço -->
+        <!-- Linha 2: Duração, Preço e Status -->
         <div class="flex flex-wrap gap-4">
-            <div class="flex-1 min-w-[180px]">
-                <label>Duração (minutos)</label>
-                <input type="number" wire:model="duracao_minutos" class="w-full border rounded p-2" 
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Duração (minutos)</label>
+                <input type="number" wire:model="duracao_minutos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                        min="15" max="480" step="15" placeholder="60">
                 @error('duracao_minutos') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                <small class="text-gray-500 text-xs">Mínimo: 15 min, Máximo: 8 horas (480 min)</small>
+                <small class="text-gray-500 text-xs">Mín: 15 min, Máx: 8h</small>
             </div>
 
-            <div class="flex-1 min-w-[180px]">
-                <label>Preço (R$)</label>
-                <input type="text" wire:model="preco" class="w-full border rounded p-2" 
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
+                <input type="text" wire:model="preco" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                        placeholder="0,00" maxlength="12"
                        x-data="{ 
                            formatMoney(event) {
@@ -91,15 +89,12 @@
                        x-on:input="formatMoney($event)"
                        x-on:keypress="if(!/[0-9]/.test($event.key) && $event.key !== 'Backspace' && $event.key !== 'Delete' && $event.key !== 'Tab') $event.preventDefault()">
                 @error('preco') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                <small class="text-gray-500 text-xs">Opcional - Ex: R$ 150,00 | Máximo: R$ 99.999,99</small>
+                <small class="text-gray-500 text-xs">Opcional - Ex: R$ 150,00</small>
             </div>
-        </div>
 
-        <!-- Linha 3: Status -->
-        <div class="flex flex-wrap gap-4">
-            <div class="flex-1 min-w-[180px]">
-                <label>Status</label>
-                <select wire:model="ativo" class="w-full border rounded p-2">
+            <div class="flex-1 min-w-[120px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select wire:model="ativo" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="1">Ativo</option>
                     <option value="0">Inativo</option>
                 </select>
@@ -109,8 +104,8 @@
 
         <!-- Linha 4: Descrição -->
         <div class="flex flex-col">
-            <label>Descrição</label>
-            <textarea wire:model="descricao" class="w-full border rounded p-2" rows="3" 
+            <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+            <textarea wire:model="descricao" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" 
                       placeholder="Descreva brevemente o serviço oferecido..."></textarea>
             @error('descricao') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
@@ -131,11 +126,13 @@
 
     </form>
 
-    <!-- Filtro de Pesquisa -->
-    <div class="mt-8 mb-4">
+    <!-- Filtro de Pesquisa - PADRONIZADO -->
+    <div class="w-full space-y-6 mt-8 mb-8 p-6 bg-gray-50 rounded-lg">
+        <h3 class="text-xl font-bold">Filtros de Pesquisa</h3>
+        
         <div class="flex flex-col">
-            <label>Pesquisar serviços</label>
-            <input type="text" wire:model.live="pesquisa" class="w-full border rounded p-2" 
+            <label class="block text-sm font-medium text-gray-700 mb-1">Pesquisar serviços</label>
+            <input type="text" wire:model.live="pesquisa" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                    placeholder="Digite o nome ou descrição do serviço...">
         </div>
     </div>

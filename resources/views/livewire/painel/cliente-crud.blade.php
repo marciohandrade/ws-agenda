@@ -29,22 +29,22 @@
     
         <!-- Linha 1: Nome (linha única) -->
         <div class="flex flex-col">
-            <label>Nome</label>
-            <input type="text" wire:model="nome" class="w-full border rounded p-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+            <input type="text" wire:model="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             @error('nome') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
         <!-- Linha 2: Email e Telefone -->
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[220px]">
-                <label>Email</label>
-                <input type="email" wire:model="email" class="w-full border rounded p-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" wire:model="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
-                <label>Telefone</label>
-                <input type="text" wire:model="telefone" x-mask="(99) 99999-9999" maxlength="15" class="w-full border rounded p-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <input type="text" wire:model="telefone" x-mask="(99) 99999-9999" maxlength="15" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 @error('telefone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
@@ -52,16 +52,16 @@
         <!-- Linha 3: Data de Nascimento e Gênero -->
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[180px]">
-                <label>Data de Nascimento</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
                 <input type="date" wire:model="data_nascimento"
-                    class="w-full border rounded p-2"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     max="{{ date('Y-m-d') }}" min="1900-01-01">
                 @error('data_nascimento') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
-                <label>Gênero</label>
-                <select wire:model="genero" class="w-full border rounded p-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Gênero</label>
+                <select wire:model="genero" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Selecione</option>
                     <option value="Masculino">Masculino</option>
                     <option value="Feminino">Feminino</option>
@@ -75,25 +75,25 @@
         <!-- Linha 4: CPF e CEP -->
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[180px]">
-                <label>CPF</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
                 <input type="text" x-data x-mask="999.999.999-99" wire:model.defer="cpf"
-                    class="w-full border rounded p-2" placeholder="000.000.000-00">
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="000.000.000-00">
                 @error('cpf') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
-                <label>CEP</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
                 <input type="text" x-data x-mask="99999-999" wire:model.defer="cep"
-                    class="w-full border rounded p-2" placeholder="00000-000">
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="00000-000">
                 @error('cep') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
 
         <!-- Linha 5: Endereço -->
         <div class="flex flex-col">
-            <label>Endereço</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
             <input type="text" wire:model.defer="endereco"
-                class="w-full border rounded p-2"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxlength="80" placeholder="Rua, Avenida...">
             @error('endereco') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
@@ -101,17 +101,17 @@
         <!-- Linha 6: Número e Complemento -->
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[120px]">
-                <label>Número</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
                 <input type="text" wire:model.defer="numero"
-                    class="w-full border rounded p-2"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     maxlength="10" placeholder="123">
                 @error('numero') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
-                <label>Complemento</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
                 <input type="text" wire:model.defer="complemento"
-                    class="w-full border rounded p-2"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     maxlength="30" placeholder="Apto, Bloco, Fundos...">
                 @error('complemento') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
@@ -132,8 +132,6 @@
         </div>
 
     </form>
-
-
 
     <h3 class="text-xl font-bold mb-2">Lista de Clientes</h3>
 
@@ -175,8 +173,4 @@
         </table>
     </div>
 
-
-
- <!-- FECHA A TABELA -->
-</div> <!-- FECHA A DIV PRINCIPAL -->
-
+</div>
