@@ -7,6 +7,8 @@ use App\Livewire\Painel\Agendamentos;
 use App\Livewire\Painel\ConfiguracoesAgendamento;
 use App\Livewire\Publico\AgendamentoPublico;
 use App\Livewire\Painel\DashboardAgendamentos;
+use App\Livewire\Painel\GerenciadorUsuarios;
+use App\Livewire\Painel\CriarUsuario;
 
 /* Route::view('/', 'welcome'); */
 
@@ -39,14 +41,32 @@ Route::get('/agendar', function () {
 //============================================
 
 // Rotas para Admin e Colaborador
-Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
+/* Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
     Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
     Route::get('/servicos', Servicos::class)->name('servicos.index');
-    Route::get('/agendamentos', \App\Livewire\Painel\Agendamentos::class)->name('agendamentos.index');
+    Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
     Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
+    Route::get('/usuarios', GerenciadorUsuarios::class)->name('usuarios.index');
+    Route::get('/usuarios/criar', CriarUsuario::class)->name('usuarios.criar');
+ }); */
 
+ Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
+    
+    // Admin tem acesso a TUDO:
+    Route::middleware(['check.role:super_admin,admin'])->group(function () {
+        Route::get('/usuarios', GerenciadorUsuarios::class)->name('usuarios.index');
+        Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
+        Route::get('/servicos', Servicos::class)->name('servicos.index');
+    });
+    
+    // Agendamentos: Admin, Super Admin E Colaborador podem acessar
+    Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
+    Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
+});
 
- });
+ 
+
+// Seguindo o padrão do seu projeto
 
     /* Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
         Route::get('/clientes', ClienteCrud::class)->name('clientes.index');

@@ -1,26 +1,4 @@
 
-bash
-php artisan migrate:status
-php artisan tinker
->>> Schema::hasColumn('users', 'telefone')
->>> Schema::hasColumn('clientes', 'user_id')
-🎯 EXECUTOU AS MIGRATIONS?
-Se sim, vamos para o próximo passo:
-
-Criação do formulário de cadastro público
-Validações de telefone único
-Sistema de envio de SMS
-Se deu algum erro, me avise que ajusto!
-
-Confirma que as migrations rodaram sem problema?
-
-
-
-
-
-
-
-
 <?php
 // ==================================================
 // MIGRATION 1: 2025_06_19_001_add_fields_to_users_table.php
