@@ -31,47 +31,105 @@ class HorariosEspecificos extends Component
         return view('livewire.painel.horarios-especificos');
     }
 
-    public function carregarHorarios()
+    /**
+ * ✅ CORRIGIDO: Carregar horários com conflito POR SERVIÇO
+ */
+    public function carregarHorarios($data)
     {
-        $config = ConfiguracaoAgendamento::where('perfil', $this->perfil_ativo)->first();
+        $this->carregandoHorarios = true;
+        $this->horariosDisponiveis = [];
         
-        if (!$config) {
-            $this->inicializarHorariosPadrao();
-            return;
-        }
-
-        $this->configuracao_id = $config->id;
-        
-        // Carregar horários específicos ou usar padrão
-        for ($dia = 1; $dia <= 7; $dia++) {
-            $horarioEspecifico = $config->horariosFuncionamento()
-                                       ->where('dia_semana', $dia)
-                                       ->first();
+        try {
+            $dataCarbon = Carbon::parse($data);
+            $diaSemana = $dataCarbon->dayOfWeek;
             
-            if ($horarioEspecifico) {
-                $this->horarios_dias[$dia] = [
-                    'id' => $horarioEspecifico->id,
-                    'ativo' => $horarioEspecifico->ativo,
-                    'horario_inicio' => $horarioEspecifico->horario_inicio->format('H:i'),
-                    'horario_fim' => $horarioEspecifico->horario_fim->format('H:i'),
-                    'tem_almoco' => $horarioEspecifico->tem_almoco,
-                    'almoco_inicio' => $horarioEspecifico->almoco_inicio ? $horarioEspecifico->almoco_inicio->format('H:i') : '12:00',
-                    'almoco_fim' => $horarioEspecifico->almoco_fim ? $horarioEspecifico->almoco_fim->format('H:i') : '13:00',
-                ];
-                $this->modo_avancado = true;
-            } else {
-                // Usar configuração geral
-                $this->horarios_dias[$dia] = [
-                    'id' => null,
-                    'ativo' => in_array((string)$dia, $config->dias_funcionamento),
-                    'horario_inicio' => $config->horario_inicio->format('H:i'),
-                    'horario_fim' => $config->horario_fim->format('H:i'),
-                    'tem_almoco' => $config->tem_horario_almoco,
-                    'almoco_inicio' => $config->almoco_inicio->format('H:i'),
-                    'almoco_fim' => $config->almoco_fim->format('H:i'),
-                ];
+            $horarioFuncionamento = DB::table('horarios_funcionamento')
+                ->where('dia_semana', $diaSemana)
+                ->where('ativo', 1)
+                ->first();
+            
+            if (!$horarioFuncionamento) {
+                $this->carregandoHorarios = false;
+                return;
             }
+            
+            // ✅ USAR DURAÇÃO DO SERVIÇO SELECIONADO COMO INTERVALO
+            $intervalo = $this->getDuracaoServicoSelecionado();
+            
+            $horarios = [];
+            $dataStr = $dataCarbon->format('Y-m-d');
+            
+            $horaInicio = substr($horarioFuncionamento->horario_inicio, 0, 8);
+            $horaFim = substr($horarioFuncionamento->horario_fim, 0, 8);
+            
+            $inicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . $horaInicio);
+            $fim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . $horaFim);
+            
+            $current = $inicio->copy();
+            
+            // ✅ BUSCAR APENAS AGENDAMENTOS DO SERVIÇO ESPECÍFICO
+            $agendamentosOcupados = [];
+            if ($this->servico_id) {
+                $agendamentosOcupados = DB::table('agendamentos')
+                    ->where('data_agendamento', $dataStr)
+                    ->where('servico_id', $this->servico_id) // ✅ FILTRO POR SERVIÇO
+                    ->whereIn('status', ['pendente', 'confirmado'])
+                    ->where('ativo', 1)
+                    ->pluck('horario_agendamento')
+                    ->map(function($horario) {
+                        return Carbon::parse($horario)->format('H:i');
+                    })
+                    ->toArray();
+            }
+            
+            while ($current < $fim) {
+                // Verificar horário de almoço
+                if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
+                    $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
+                    $almocoFim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_fim, 0, 8));
+                    
+                    if ($current >= $almocoInicio && $current < $almocoFim) {
+                        $current->addMinutes($intervalo);
+                        continue;
+                    }
+                }
+                
+                $horarioFormatado = $current->format('H:i');
+                $temAgendamento = in_array($horarioFormatado, $agendamentosOcupados);
+                
+                // Validação adicional: Verificar se há tempo suficiente para o serviço
+                $horarioFimServico = $current->copy()->addMinutes($intervalo);
+                $servicoCabeFinal = $horarioFimServico <= $fim;
+                
+                // Se passa do almoço, verificar se cabe antes do almoço
+                if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
+                    $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
+                    if ($current < $almocoInicio && $horarioFimServico > $almocoInicio) {
+                        $servicoCabeFinal = false;
+                    }
+                }
+                
+                if ($servicoCabeFinal) {
+                    $horarios[] = [
+                        'value' => $horarioFormatado,
+                        'display' => $horarioFormatado,
+                        'disponivel' => !$temAgendamento,
+                        'ocupado' => $temAgendamento,
+                        'servico_id' => $this->servico_id // ✅ DEBUG: Incluir ID do serviço
+                    ];
+                }
+                
+                $current->addMinutes($intervalo);
+            }
+            
+            $this->horariosDisponiveis = $horarios;
+            
+        } catch (\Exception $e) {
+            $this->mensagemErro = 'Erro ao carregar horários: ' . $e->getMessage();
+            $this->horariosDisponiveis = [];
         }
+        
+        $this->carregandoHorarios = false;
     }
 
     public function inicializarHorariosPadrao()

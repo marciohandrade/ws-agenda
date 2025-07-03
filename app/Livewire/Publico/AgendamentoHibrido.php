@@ -249,7 +249,7 @@ class AgendamentoHibrido extends Component
     }
 
     /**
-     * ✅ CORRIGIDO: Carregar horários com intervalo dinâmico baseado no serviço
+     * ✅ CORRIGIDO: Carregar horários com filtro POR SERVIÇO - PROBLEMA RESOLVIDO!
      */
     public function carregarHorarios($data)
     {
@@ -273,7 +273,7 @@ class AgendamentoHibrido extends Component
             // ✅ USAR DURAÇÃO DO SERVIÇO SELECIONADO COMO INTERVALO
             $intervalo = $this->getDuracaoServicoSelecionado();
             
-            // ✅ LOG PARA DEBUG (remover em produção)
+            // ✅ LOG PARA DEBUG (remover em produção se necessário)
             \Log::info("Carregando horários para serviço {$this->servico_id} com intervalo de {$intervalo} minutos");
             
             $horarios = [];
@@ -287,15 +287,26 @@ class AgendamentoHibrido extends Component
             
             $current = $inicio->copy();
             
-            $agendamentosOcupados = DB::table('agendamentos')
-                ->where('data_agendamento', $dataStr)
-                ->whereIn('status', ['pendente', 'confirmado'])
-                ->where('ativo', 1)
-                ->pluck('horario_agendamento')
-                ->map(function($horario) {
-                    return Carbon::parse($horario)->format('H:i');
-                })
-                ->toArray();
+            // ✅ CORREÇÃO PRINCIPAL: BUSCAR APENAS AGENDAMENTOS DO SERVIÇO ESPECÍFICO
+            $agendamentosOcupados = [];
+            if ($this->servico_id) {
+                $agendamentosOcupados = DB::table('agendamentos')
+                    ->where('data_agendamento', $dataStr)
+                    ->where('servico_id', $this->servico_id) // ✅ FILTRO POR SERVIÇO ADICIONADO!
+                    ->whereIn('status', ['pendente', 'confirmado'])
+                    ->where('ativo', 1)
+                    ->pluck('horario_agendamento')
+                    ->map(function($horario) {
+                        return Carbon::parse($horario)->format('H:i');
+                    })
+                    ->toArray();
+                
+                // ✅ LOG PARA DEBUG - Mostra quantos agendamentos foram encontrados
+                \Log::info("Encontrados " . count($agendamentosOcupados) . " agendamentos ocupados para serviço {$this->servico_id} na data {$dataStr}");
+            } else {
+                // ✅ Se não há serviço selecionado, não há horários ocupados
+                \Log::info("Nenhum serviço selecionado - todos os horários estarão disponíveis");
+            }
             
             while ($current < $fim) {
                 // ✅ VERIFICA HORÁRIO DE ALMOÇO
@@ -310,6 +321,8 @@ class AgendamentoHibrido extends Component
                 }
                 
                 $horarioFormatado = $current->format('H:i');
+                
+                // ✅ AGORA VERIFICA APENAS CONFLITOS DO MESMO SERVIÇO
                 $temAgendamento = in_array($horarioFormatado, $agendamentosOcupados);
                 
                 // ✅ VALIDAÇÃO ADICIONAL: Verificar se há tempo suficiente para o serviço
@@ -330,7 +343,8 @@ class AgendamentoHibrido extends Component
                         'display' => $horarioFormatado,
                         'disponivel' => !$temAgendamento,
                         'ocupado' => $temAgendamento,
-                        'intervalo' => $intervalo // ✅ ADICIONA INFO DO INTERVALO PARA DEBUG
+                        'intervalo' => $intervalo, // ✅ ADICIONA INFO DO INTERVALO PARA DEBUG
+                        'servico_id' => $this->servico_id // ✅ DEBUG: Incluir ID do serviço
                     ];
                 }
                 
@@ -339,10 +353,13 @@ class AgendamentoHibrido extends Component
             
             $this->horariosDisponiveis = $horarios;
             
+            // ✅ LOG FINAL PARA DEBUG
+            \Log::info("Gerados " . count($horarios) . " horários para o serviço {$this->servico_id}");
+            
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao carregar horários: ' . $e->getMessage();
             
-            // ✅ FALLBACK COM HORÁRIOS DE EXEMPLO
+            // ✅ FALLBACK COM HORÁRIOS DE EXEMPLO (SEM FILTRO POR SERVIÇO)
             $this->horariosDisponiveis = [
                 ['value' => '08:00', 'display' => '08:00', 'disponivel' => true, 'ocupado' => false, 'intervalo' => 30],
                 ['value' => '09:00', 'display' => '09:00', 'disponivel' => false, 'ocupado' => true, 'intervalo' => 30],
@@ -555,16 +572,17 @@ class AgendamentoHibrido extends Component
                 'senhaConfirmacao.same' => 'As senhas não coincidem'
             ]);
             
-            // Verificar conflito de horário antes de salvar
+            // ✅ VERIFICAR CONFLITO COM FILTRO POR SERVIÇO TAMBÉM
             $conflito = DB::table('agendamentos')
                 ->where('data_agendamento', $this->dataAgendamento)
                 ->whereTime('horario_agendamento', $this->horarioAgendamento . ':00')
+                ->where('servico_id', $this->servico_id) // ✅ VERIFICAR CONFLITO DO MESMO SERVIÇO
                 ->whereIn('status', ['pendente', 'confirmado'])
                 ->where('ativo', 1)
                 ->exists();
             
             if ($conflito) {
-                $this->mensagemErro = 'Este horário não está mais disponível. Selecione outro horário.';
+                $this->mensagemErro = 'Este horário não está mais disponível para este serviço. Selecione outro horário.';
                 $this->carregando = false;
                 $this->carregarHorarios($this->dataAgendamento); // Recarregar horários
                 return;
@@ -639,16 +657,17 @@ class AgendamentoHibrido extends Component
     private function finalizarAgendamento()
     {
         try {
-            // Verificar conflito
+            // ✅ VERIFICAR CONFLITO COM FILTRO POR SERVIÇO TAMBÉM
             $conflito = DB::table('agendamentos')
                 ->where('data_agendamento', $this->dataAgendamento)
                 ->whereTime('horario_agendamento', $this->horarioAgendamento . ':00')
+                ->where('servico_id', $this->servico_id) // ✅ VERIFICAR CONFLITO DO MESMO SERVIÇO
                 ->whereIn('status', ['pendente', 'confirmado'])
                 ->where('ativo', 1)
                 ->exists();
             
             if ($conflito) {
-                $this->mensagemErro = 'Este horário não está mais disponível. Selecione outro horário.';
+                $this->mensagemErro = 'Este horário não está mais disponível para este serviço. Selecione outro horário.';
                 $this->carregarHorarios($this->dataAgendamento);
                 return;
             }
