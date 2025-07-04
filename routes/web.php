@@ -9,46 +9,41 @@ use App\Livewire\Publico\AgendamentoPublico;
 use App\Livewire\Painel\DashboardAgendamentos;
 use App\Livewire\Painel\GerenciadorUsuarios;
 use App\Livewire\Painel\CriarUsuario;
+use App\Livewire\Usuario\MeusAgendamentos;
+
+
+
 
 /* Route::view('/', 'welcome'); */
+
+
+//============================================
+// ROTAS PÚBLICAS - NÃO MEXER NESSAS ROTASS
+//============================================
 
 Route::get('/', function () {
     return view('index');
 });
 
+// Rota para agendamento online (público)
+Route::get('/agendar', function () {
+    return view('agendamento');
+})->name('agendar');
+
 Route::get('/register', function () {
     return redirect()->route('login')->with('info', 'O registro público foi desabilitado. Entre em contato com o administrador para criar uma conta.');
 })->name('register.disabled');
-
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-//============================================
-// Rota para agendamento online (público)
-Route::get('/agendar', function () {
-    return view('agendamento');
-})->name('agendar');
-//============================================
 
-/* Route::get('/cadastro', function () {
-    return view('pages.cadastro-publico');
-}); */
+
 
 //============================================
 // ROTAS PROTEGIDAS - PAINEL ADMINISTRATIVO
 //============================================
-
-// Rotas para Admin e Colaborador
-/* Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
-    Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
-    Route::get('/servicos', Servicos::class)->name('servicos.index');
-    Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
-    Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
-    Route::get('/usuarios', GerenciadorUsuarios::class)->name('usuarios.index');
-    Route::get('/usuarios/criar', CriarUsuario::class)->name('usuarios.criar');
- }); */
 
  Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
     
@@ -63,6 +58,15 @@ Route::get('/agendar', function () {
     Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
     Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
 });
+
+   Route::middleware(['auth', 'check.role:usuario'])->group(function () {
+        Route::get('/meus-agendamentos', MeusAgendamentos::class)
+            ->name('usuario.meus-agendamentos');
+        
+        Route::get('/perfil', function() {
+            return view('usuario.perfil', ['title' => 'Meu Perfil']);
+        })->name('usuario.perfil');
+    });
 
  
 
