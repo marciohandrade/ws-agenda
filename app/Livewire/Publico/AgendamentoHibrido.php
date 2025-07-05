@@ -14,6 +14,8 @@ class AgendamentoHibrido extends Component
 {
     // ETAPAS DO FLUXO
     public $etapaAtual = 1;
+    public $usuarioLogado = false;
+    public $exibirAgendamentos = false;
     
     // DADOS DO AGENDAMENTO
     public $servico_id = '';
@@ -37,6 +39,7 @@ class AgendamentoHibrido extends Component
     
     // DADOS
     public $servicos = [];
+    public $agendamentosUsuario = [];
     
     // CALENDÁRIO
     public $mesAtual;
@@ -51,11 +54,149 @@ class AgendamentoHibrido extends Component
     public $horarioSelecionado = '';
 
     /**
-     * Inicializar componente
+     * ✅ INICIALIZAR COMPONENTE COM LÓGICA INTELIGENTE
      */
     public function mount()
     {
+        // Detectar se usuário está logado
+        $this->usuarioLogado = auth()->check();
+        
+        // Se logado, preencher dados básicos
+        if ($this->usuarioLogado) {
+            $user = auth()->user();
+            $this->nome = $user->name;
+            $this->email = $user->email;
+            $this->telefone = $user->telefone ?? '';
+            
+            // Carregar agendamentos existentes
+            $this->carregarAgendamentosUsuario();
+        }
+        
         $this->carregarServicos();
+        $this->inicializarCalendario();
+    }
+
+    /**
+     * ✅ NOVO: Carregar agendamentos do usuário logado
+     */
+    public function carregarAgendamentosUsuario()
+    {
+        if (!$this->usuarioLogado) {
+            return;
+        }
+
+        try {
+            $agendamentos = DB::table('agendamentos as a')
+                ->leftJoin('servicos as s', 'a.servico_id', '=', 's.id')
+                ->where('a.user_id', auth()->id())
+                ->where('a.ativo', 1)
+                ->select([
+                    'a.id',
+                    'a.data_agendamento',
+                    'a.horario_agendamento',
+                    'a.observacoes',
+                    'a.status',
+                    'a.created_at',
+                    's.nome as servico_nome',
+                    's.preco as servico_preco',
+                    's.duracao_minutos as servico_duracao'
+                ])
+                ->orderBy('a.data_agendamento', 'desc')
+                ->orderBy('a.horario_agendamento', 'desc')
+                ->get();
+
+            $this->agendamentosUsuario = $agendamentos->map(function ($agendamento) {
+                $dataAgendamento = Carbon::parse($agendamento->data_agendamento);
+                $horarioAgendamento = Carbon::parse($agendamento->horario_agendamento);
+                
+                return [
+                    'id' => $agendamento->id,
+                    'codigo' => '#' . str_pad($agendamento->id, 6, '0', STR_PAD_LEFT),
+                    'data_agendamento' => $agendamento->data_agendamento,
+                    'horario_agendamento' => $agendamento->horario_agendamento,
+                    'data_formatada' => $dataAgendamento->format('d/m/Y'),
+                    'horario_formatado' => $horarioAgendamento->format('H:i'),
+                    'data_completa' => $dataAgendamento->format('d/m/Y') . ' às ' . $horarioAgendamento->format('H:i'),
+                    'servico_nome' => $agendamento->servico_nome ?? 'Serviço não identificado',
+                    'servico_preco_formatado' => 'R$ ' . number_format($agendamento->servico_preco ?? 0, 2, ',', '.'),
+                    'servico_duracao_formatada' => ($agendamento->servico_duracao ?? 30) . ' min',
+                    'observacoes' => $agendamento->observacoes,
+                    'status' => $agendamento->status,
+                    'status_cor' => $this->getStatusCor($agendamento->status),
+                    'status_texto' => $this->getStatusTexto($agendamento->status),
+                    'created_at_formatado' => Carbon::parse($agendamento->created_at)->format('d/m/Y H:i'),
+                    'is_futuro' => $dataAgendamento->isFuture(),
+                    'is_hoje' => $dataAgendamento->isToday(),
+                    'is_passado' => $dataAgendamento->isPast()
+                ];
+            })->toArray();
+
+        } catch (\Exception $e) {
+            $this->mensagemErro = 'Erro ao carregar agendamentos: ' . $e->getMessage();
+            $this->agendamentosUsuario = [];
+        }
+    }
+
+    /**
+     * ✅ NOVO: Obter cor do status
+     */
+    private function getStatusCor($status)
+    {
+        return match($status) {
+            'pendente' => 'yellow',
+            'confirmado' => 'green', 
+            'cancelado' => 'red',
+            'concluido' => 'blue',
+            default => 'gray'
+        };
+    }
+
+    /**
+     * ✅ NOVO: Obter texto do status
+     */
+    private function getStatusTexto($status)
+    {
+        return match($status) {
+            'pendente' => 'Aguardando Confirmação',
+            'confirmado' => 'Confirmado',
+            'cancelado' => 'Cancelado',
+            'concluido' => 'Concluído',
+            default => 'Status Desconhecido'
+        };
+    }
+
+    /**
+     * ✅ NOVO: Alternar visualização de agendamentos
+     */
+    public function alternarExibicaoAgendamentos()
+    {
+        $this->exibirAgendamentos = !$this->exibirAgendamentos;
+        
+        if ($this->exibirAgendamentos) {
+            $this->carregarAgendamentosUsuario();
+        }
+    }
+
+    /**
+     * ✅ NOVO: Iniciar novo agendamento (resetar formulário)
+     */
+    public function novoAgendamento()
+    {
+        // Reset do formulário
+        $this->etapaAtual = 1;
+        $this->exibirAgendamentos = false;
+        $this->servico_id = '';
+        $this->dataAgendamento = '';
+        $this->horarioAgendamento = '';
+        $this->observacoes = '';
+        $this->dataSelecionada = '';
+        $this->horarioSelecionado = '';
+        $this->horariosDisponiveis = [];
+        $this->mensagemErro = '';
+        $this->mensagemSucesso = '';
+        $this->agendamentoId = null;
+        
+        // Recarregar dados básicos
         $this->inicializarCalendario();
     }
 
@@ -189,7 +330,6 @@ class AgendamentoHibrido extends Component
                 ->first();
             
             if ($servico) {
-                // Verifica ambos os nomes de campo para compatibilidade
                 return (int) ($servico->duracao_minutos ?? $servico->duracao ?? 30);
             }
         } catch (\Exception $e) {
@@ -204,21 +344,15 @@ class AgendamentoHibrido extends Component
      */
     public function updatedServicoId()
     {
-        // Limpar seleções de data/horário quando trocar serviço
         $this->horarioSelecionado = '';
         $this->horarioAgendamento = '';
         $this->horariosDisponiveis = [];
-        
-        // ✅ FORÇA LIMPEZA DA MENSAGEM DE ERRO
         $this->mensagemErro = '';
         
-        // ✅ Se já tinha uma data selecionada, recarregar horários com novo intervalo
         if ($this->dataSelecionada && $this->servico_id) {
-            // ✅ FORÇA REFRESH DOS HORÁRIOS COM NOVO SERVIÇO
             $this->recarregarHorarios();
         }
         
-        // ✅ DISPATCH DE EVENTO PARA NOTIFICAR MUDANÇA NO FRONTEND
         $this->dispatch('servico-alterado');
     }
 
@@ -229,17 +363,13 @@ class AgendamentoHibrido extends Component
     {
         if ($this->dataSelecionada) {
             $this->carregandoHorarios = true;
-            
-            // ✅ PEQUENO DELAY PARA GARANTIR QUE O FRONTEND VEJA O LOADING
             $this->carregarHorarios($this->dataSelecionada);
-            
-            // ✅ DISPATCH PARA NOTIFICAR QUE OS HORÁRIOS FORAM RECARREGADOS
             $this->dispatch('horarios-recarregados');
         }
     }
 
     /**
-     * ✅ MÉTODO PÚBLICO: Forçar recarga de horários (pode ser chamado do frontend)
+     * ✅ MÉTODO PÚBLICO: Forçar recarga de horários
      */
     public function forcarRecargaHorarios()
     {
@@ -249,7 +379,7 @@ class AgendamentoHibrido extends Component
     }
 
     /**
-     * ✅ CORRIGIDO: Carregar horários com filtro POR SERVIÇO - PROBLEMA RESOLVIDO!
+     * ✅ CORRIGIDO: Carregar horários com filtro POR SERVIÇO
      */
     public function carregarHorarios($data)
     {
@@ -270,12 +400,7 @@ class AgendamentoHibrido extends Component
                 return;
             }
             
-            // ✅ USAR DURAÇÃO DO SERVIÇO SELECIONADO COMO INTERVALO
             $intervalo = $this->getDuracaoServicoSelecionado();
-            
-            // ✅ LOG PARA DEBUG (remover em produção se necessário)
-            \Log::info("Carregando horários para serviço {$this->servico_id} com intervalo de {$intervalo} minutos");
-            
             $horarios = [];
             $dataStr = $dataCarbon->format('Y-m-d');
             
@@ -287,12 +412,11 @@ class AgendamentoHibrido extends Component
             
             $current = $inicio->copy();
             
-            // ✅ CORREÇÃO PRINCIPAL: BUSCAR APENAS AGENDAMENTOS DO SERVIÇO ESPECÍFICO
             $agendamentosOcupados = [];
             if ($this->servico_id) {
                 $agendamentosOcupados = DB::table('agendamentos')
                     ->where('data_agendamento', $dataStr)
-                    ->where('servico_id', $this->servico_id) // ✅ FILTRO POR SERVIÇO ADICIONADO!
+                    ->where('servico_id', $this->servico_id)
                     ->whereIn('status', ['pendente', 'confirmado'])
                     ->where('ativo', 1)
                     ->pluck('horario_agendamento')
@@ -300,40 +424,30 @@ class AgendamentoHibrido extends Component
                         return Carbon::parse($horario)->format('H:i');
                     })
                     ->toArray();
-                
-                // ✅ LOG PARA DEBUG - Mostra quantos agendamentos foram encontrados
-                \Log::info("Encontrados " . count($agendamentosOcupados) . " agendamentos ocupados para serviço {$this->servico_id} na data {$dataStr}");
-            } else {
-                // ✅ Se não há serviço selecionado, não há horários ocupados
-                \Log::info("Nenhum serviço selecionado - todos os horários estarão disponíveis");
             }
             
             while ($current < $fim) {
-                // ✅ VERIFICA HORÁRIO DE ALMOÇO
+                // Verificar horário de almoço
                 if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
                     $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
                     $almocoFim = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_fim, 0, 8));
                     
                     if ($current >= $almocoInicio && $current < $almocoFim) {
-                        $current->addMinutes($intervalo); // ✅ USA INTERVALO DINÂMICO
+                        $current->addMinutes($intervalo);
                         continue;
                     }
                 }
                 
                 $horarioFormatado = $current->format('H:i');
-                
-                // ✅ AGORA VERIFICA APENAS CONFLITOS DO MESMO SERVIÇO
                 $temAgendamento = in_array($horarioFormatado, $agendamentosOcupados);
                 
-                // ✅ VALIDAÇÃO ADICIONAL: Verificar se há tempo suficiente para o serviço
                 $horarioFimServico = $current->copy()->addMinutes($intervalo);
                 $servicoCabeFinal = $horarioFimServico <= $fim;
                 
-                // ✅ Se passa do almoço, verificar se cabe antes do almoço
                 if (isset($horarioFuncionamento->tem_almoco) && $horarioFuncionamento->tem_almoco) {
                     $almocoInicio = Carbon::createFromFormat('Y-m-d H:i:s', $dataStr . ' ' . substr($horarioFuncionamento->almoco_inicio, 0, 8));
                     if ($current < $almocoInicio && $horarioFimServico > $almocoInicio) {
-                        $servicoCabeFinal = false; // Não cabe antes do almoço
+                        $servicoCabeFinal = false;
                     }
                 }
                 
@@ -343,23 +457,19 @@ class AgendamentoHibrido extends Component
                         'display' => $horarioFormatado,
                         'disponivel' => !$temAgendamento,
                         'ocupado' => $temAgendamento,
-                        'intervalo' => $intervalo, // ✅ ADICIONA INFO DO INTERVALO PARA DEBUG
-                        'servico_id' => $this->servico_id // ✅ DEBUG: Incluir ID do serviço
+                        'intervalo' => $intervalo,
+                        'servico_id' => $this->servico_id
                     ];
                 }
                 
-                $current->addMinutes($intervalo); // ✅ USA INTERVALO DINÂMICO
+                $current->addMinutes($intervalo);
             }
             
             $this->horariosDisponiveis = $horarios;
             
-            // ✅ LOG FINAL PARA DEBUG
-            \Log::info("Gerados " . count($horarios) . " horários para o serviço {$this->servico_id}");
-            
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao carregar horários: ' . $e->getMessage();
             
-            // ✅ FALLBACK COM HORÁRIOS DE EXEMPLO (SEM FILTRO POR SERVIÇO)
             $this->horariosDisponiveis = [
                 ['value' => '08:00', 'display' => '08:00', 'disponivel' => true, 'ocupado' => false, 'intervalo' => 30],
                 ['value' => '09:00', 'display' => '09:00', 'disponivel' => false, 'ocupado' => true, 'intervalo' => 30],
@@ -404,6 +514,7 @@ class AgendamentoHibrido extends Component
         ]);
         
         if (Auth::attempt(['email' => $this->email, 'password' => $this->senha])) {
+            $this->usuarioLogado = true;
             $this->finalizarAgendamento();
         } else {
             $this->addError('senha', 'E-mail ou senha incorretos');
@@ -416,7 +527,6 @@ class AgendamentoHibrido extends Component
     private function enviarEmailConfirmacao($dadosUsuario, $dadosAgendamento)
     {
         try {
-            // Buscar dados do serviço para o email
             $servico = DB::table('servicos')
                 ->where('id', $this->servico_id)
                 ->first();
@@ -425,11 +535,9 @@ class AgendamentoHibrido extends Component
             $precoServico = $servico ? 'R$ ' . number_format($servico->preco ?? 0, 2, ',', '.') : '';
             $duracaoServico = $servico ? ($servico->duracao_minutos ?? $servico->duracao ?? 30) . ' minutos' : '';
             
-            // Formatação de data e hora para o email
             $dataFormatada = Carbon::parse($this->dataAgendamento)->format('d/m/Y');
             $horarioFormatado = $this->horarioAgendamento;
             
-            // Dados para o template do email
             $dadosEmail = [
                 'nomeCliente' => $dadosUsuario['nome'],
                 'emailCliente' => $dadosUsuario['email'],
@@ -443,7 +551,6 @@ class AgendamentoHibrido extends Component
                 'status' => 'Pendente'
             ];
             
-            // Enviar email usando template simples
             Mail::send([], [], function ($message) use ($dadosEmail) {
                 $message->to($dadosEmail['emailCliente'], $dadosEmail['nomeCliente'])
                     ->subject('Confirmação de Agendamento - Status Pendente')
@@ -451,7 +558,6 @@ class AgendamentoHibrido extends Component
             });
             
         } catch (\Exception $e) {
-            // Log do erro, mas não quebra o fluxo
             \Log::error('Erro ao enviar email de confirmação: ' . $e->getMessage());
         }
     }
@@ -553,7 +659,6 @@ class AgendamentoHibrido extends Component
         $this->mensagemErro = '';
         
         try {
-            // Validações
             $this->validate([
                 'nome' => 'required|string|min:3|max:255',
                 'email' => 'required|email|unique:users,email',
@@ -572,11 +677,10 @@ class AgendamentoHibrido extends Component
                 'senhaConfirmacao.same' => 'As senhas não coincidem'
             ]);
             
-            // ✅ VERIFICAR CONFLITO COM FILTRO POR SERVIÇO TAMBÉM
             $conflito = DB::table('agendamentos')
                 ->where('data_agendamento', $this->dataAgendamento)
                 ->whereTime('horario_agendamento', $this->horarioAgendamento . ':00')
-                ->where('servico_id', $this->servico_id) // ✅ VERIFICAR CONFLITO DO MESMO SERVIÇO
+                ->where('servico_id', $this->servico_id)
                 ->whereIn('status', ['pendente', 'confirmado'])
                 ->where('ativo', 1)
                 ->exists();
@@ -584,12 +688,11 @@ class AgendamentoHibrido extends Component
             if ($conflito) {
                 $this->mensagemErro = 'Este horário não está mais disponível para este serviço. Selecione outro horário.';
                 $this->carregando = false;
-                $this->carregarHorarios($this->dataAgendamento); // Recarregar horários
+                $this->carregarHorarios($this->dataAgendamento);
                 return;
             }
             
             DB::transaction(function () {
-                // 1. Criar usuário
                 $userId = DB::table('users')->insertGetId([
                     'name' => $this->nome,
                     'email' => $this->email,
@@ -600,7 +703,6 @@ class AgendamentoHibrido extends Component
                     'updated_at' => now(),
                 ]);
                 
-                // 2. Criar cliente (SEM coluna 'ativo')
                 $clienteId = DB::table('clientes')->insertGetId([
                     'user_id' => $userId,
                     'nome' => $this->nome,
@@ -610,7 +712,6 @@ class AgendamentoHibrido extends Component
                     'updated_at' => now(),
                 ]);
                 
-                // 3. Criar agendamento
                 $this->agendamentoId = DB::table('agendamentos')->insertGetId([
                     'cliente_id' => $clienteId,
                     'user_id' => $userId,
@@ -629,11 +730,10 @@ class AgendamentoHibrido extends Component
                     'updated_at' => now(),
                 ]);
                 
-                // 4. Login automático
                 Auth::loginUsingId($userId);
+                $this->usuarioLogado = true;
             });
             
-            // ✅ ENVIAR EMAIL DE CONFIRMAÇÃO
             $this->enviarEmailConfirmacao([
                 'nome' => $this->nome,
                 'email' => $this->email
@@ -644,6 +744,9 @@ class AgendamentoHibrido extends Component
             $this->etapaAtual = 3;
             $this->mensagemSucesso = 'Agendamento realizado com sucesso! Sua conta foi criada e você já está logado no sistema. Um email de confirmação foi enviado para ' . $this->email;
             
+            // Carregar agendamentos do usuário após login
+            $this->carregarAgendamentosUsuario();
+            
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao processar agendamento: ' . $e->getMessage();
         }
@@ -652,16 +755,15 @@ class AgendamentoHibrido extends Component
     }
 
     /**
-     * Finalizar agendamento (para login existente)
+     * ✅ MODIFICADO: Finalizar agendamento para usuário logado
      */
     private function finalizarAgendamento()
     {
         try {
-            // ✅ VERIFICAR CONFLITO COM FILTRO POR SERVIÇO TAMBÉM
             $conflito = DB::table('agendamentos')
                 ->where('data_agendamento', $this->dataAgendamento)
                 ->whereTime('horario_agendamento', $this->horarioAgendamento . ':00')
-                ->where('servico_id', $this->servico_id) // ✅ VERIFICAR CONFLITO DO MESMO SERVIÇO
+                ->where('servico_id', $this->servico_id)
                 ->whereIn('status', ['pendente', 'confirmado'])
                 ->where('ativo', 1)
                 ->exists();
@@ -672,7 +774,6 @@ class AgendamentoHibrido extends Component
                 return;
             }
             
-            // Buscar ou criar cliente
             $cliente = DB::table('clientes')->where('user_id', Auth::id())->first();
             
             if (!$cliente) {
@@ -688,7 +789,6 @@ class AgendamentoHibrido extends Component
                 $clienteId = $cliente->id;
             }
             
-            // Criar agendamento
             $this->agendamentoId = DB::table('agendamentos')->insertGetId([
                 'cliente_id' => $clienteId,
                 'user_id' => Auth::id(),
@@ -707,8 +807,18 @@ class AgendamentoHibrido extends Component
                 'updated_at' => now(),
             ]);
             
+            $this->enviarEmailConfirmacao([
+                'nome' => Auth::user()->name,
+                'email' => Auth::user()->email
+            ], [
+                'agendamento_id' => $this->agendamentoId
+            ]);
+            
             $this->etapaAtual = 3;
             $this->mensagemSucesso = 'Agendamento realizado com sucesso!';
+            
+            // Recarregar agendamentos após confirmar
+            $this->carregarAgendamentosUsuario();
             
         } catch (\Exception $e) {
             $this->mensagemErro = 'Erro ao finalizar agendamento: ' . $e->getMessage();
@@ -716,7 +826,7 @@ class AgendamentoHibrido extends Component
     }
 
     /**
-     * Próxima etapa
+     * ✅ MODIFICADO: Próxima etapa com lógica inteligente
      */
     public function proximaEtapa()
     {
@@ -732,7 +842,12 @@ class AgendamentoHibrido extends Component
                 'horarioAgendamento.required' => 'Selecione um horário disponível',
             ]);
             
-            $this->etapaAtual = 2;
+            // ✅ LÓGICA INTELIGENTE: Se usuário logado, pula etapa 2
+            if ($this->usuarioLogado) {
+                $this->finalizarAgendamento();
+            } else {
+                $this->etapaAtual = 2;
+            }
         }
     }
     
@@ -815,7 +930,6 @@ class AgendamentoHibrido extends Component
             
             if ($servicosDB->count() > 0) {
                 $this->servicos = $servicosDB->map(function ($servico) {
-                    // ✅ COMPATIBILIDADE COM AMBOS OS CAMPOS
                     $duracao = $servico->duracao_minutos ?? $servico->duracao ?? 30;
                     
                     return [
