@@ -32,7 +32,7 @@
             </div>
         @endif
 
-        {{-- Estatísticas em Cards --}}
+        {{-- Estatísticas em Cards não descomentar --}}
         <!-- <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 text-center">
                 <div class="text-2xl font-bold text-gray-700">{{ $estatisticas['total'] ?? 0 }}</div>

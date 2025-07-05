@@ -10,6 +10,7 @@ use App\Livewire\Painel\DashboardAgendamentos;
 use App\Livewire\Painel\GerenciadorUsuarios;
 use App\Livewire\Painel\CriarUsuario;
 use App\Livewire\Usuario\MeusAgendamentos;
+use App\Livewire\Usuario\NovoAgendamento;
 
 
 
@@ -62,6 +63,9 @@ Route::view('profile', 'profile')
    Route::middleware(['auth', 'check.role:usuario'])->group(function () {
         Route::get('/meus-agendamentos', MeusAgendamentos::class)
             ->name('usuario.meus-agendamentos');
+
+        Route::get('/novo-agendamento', NovoAgendamento::class)
+        ->name('usuario.novo-agendamento');
         
         Route::get('/perfil', function() {
             return view('usuario.perfil', ['title' => 'Meu Perfil']);

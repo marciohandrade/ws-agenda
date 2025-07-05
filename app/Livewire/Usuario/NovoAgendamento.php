@@ -9,326 +9,356 @@ use Carbon\Carbon;
 
 class NovoAgendamento extends Component
 {
-    // Propriedades do formulário
-    public $servico_id = '';
-    public $data_agendamento = '';
-    public $horario_agendamento = '';
-    public $observacoes = '';
-    
-    // Estados
-    public $mensagemSucesso = '';
-    public $mensagemErro = '';
-    public $carregando = false;
-    
-    // Dados
+    public $etapaAtual = 1;
     public $servicos = [];
-    public $horariosDisponiveis = [];
-    public $servicoSelecionado = null;
-
-    // Reagendamento (se vier de reagendar)
-    public $reagendandoId = null;
-    public $agendamentoOriginal = null;
-
-    protected function rules()
-    {
-        return [
-            'servico_id' => 'required|exists:servicos,id',
-            'data_agendamento' => [
-                'required',
-                'date',
-                'after_or_equal:today',
-                function ($attribute, $value, $fail) {
-                    $this->validarDiaFuncionamento($value, $fail);
-                }
-            ],
-            'horario_agendamento' => [
-                'required',
-                function ($attribute, $value, $fail) {
-                    $this->validarHorarioDisponivel($value, $fail);
-                }
-            ],
-            'observacoes' => 'nullable|string|max:500'
-        ];
-    }
-
-    protected $messages = [
-        'servico_id.required' => 'Selecione um serviço.',
-        'servico_id.exists' => 'Serviço selecionado não existe.',
-        'data_agendamento.required' => 'A data é obrigatória.',
-        'data_agendamento.after_or_equal' => 'A data deve ser hoje ou uma data futura.',
-        'horario_agendamento.required' => 'O horário é obrigatório.',
-        'observacoes.max' => 'As observações não podem ter mais de 500 caracteres.'
-    ];
+    public $mensagemErro = '';
+    
+    // Variáveis do calendário
+    public $mesAtual;
+    public $anoAtual;
+    public $dataSelecionada = '';
+    public $diasFuncionamento = [];
+    
+    // Variáveis do agendamento
+    public $servico_id = '';
+    public $dataAgendamento = '';
 
     public function mount()
     {
-        // Verificar autenticação
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         $user = Auth::user();
 
-        // Verificar se é usuário comum
         if (!$user->isUsuario()) {
             if ($user->canAccessAdmin()) {
                 return redirect()->route('painel.agendamentos.index');
             }
             abort(403, 'Acesso negado.');
         }
-
-        // Se está reagendando
-        if (request()->has('reagendar')) {
-            $this->reagendandoId = request()->get('reagendar');
-            $this->carregarAgendamentoParaReagendar();
-        }
         
         $this->carregarServicos();
+        $this->inicializarCalendario();
+        $this->carregarDiasFuncionamento(); // ⚠️ TESTE: Carregamento do banco
     }
 
-    private function carregarAgendamentoParaReagendar()
-    {
-        try {
-            $this->agendamentoOriginal = DB::table('agendamentos')
-                ->join('servicos', 'agendamentos.servico_id', '=', 'servicos.id')
-                ->select('agendamentos.*', 'servicos.nome as servico_nome')
-                ->where('agendamentos.id', $this->reagendandoId)
-                ->where('agendamentos.user_id', Auth::id())
-                ->where('agendamentos.ativo', 1)
-                ->first();
-
-            if ($this->agendamentoOriginal) {
-                $this->servico_id = $this->agendamentoOriginal->servico_id;
-                $this->observacoes = $this->agendamentoOriginal->observacoes;
-                $this->atualizarServicoSelecionado();
-            }
-        } catch (\Exception $e) {
-            $this->mensagemErro = 'Erro ao carregar agendamento para reagendar.';
-        }
-    }
-
+    // ⚠️ TESTE: Carregamento real de serviços do banco
     public function carregarServicos()
     {
         try {
-            $this->servicos = DB::table('servicos')
+            $this->mensagemErro = 'Tentando carregar serviços do banco...';
+            
+            $servicosDB = DB::table('servicos')
                 ->where('ativo', 1)
                 ->orderBy('nome')
-                ->get()
-                ->toArray();
+                ->get();
+            
+            $this->mensagemErro = 'Encontrados ' . $servicosDB->count() . ' serviços no banco';
+            
+            if ($servicosDB->count() > 0) {
+                $this->servicos = $servicosDB->map(function ($servico) {
+                    $duracao = $servico->duracao_minutos ?? $servico->duracao ?? 30;
+                    
+                    return [
+                        'id' => $servico->id,
+                        'nome' => $servico->nome,
+                        'descricao' => $servico->descricao ?? '',
+                        'preco' => $servico->preco ?? 0,
+                        'duracao' => $duracao,
+                        'preco_formatado' => 'R$ ' . number_format($servico->preco ?? 0, 2, ',', '.'),
+                        'duracao_formatada' => $duracao . ' min',
+                        'display_completo' => $servico->nome . ' - R$ ' . number_format($servico->preco ?? 0, 2, ',', '.') . ' (' . $duracao . ' min)'
+                    ];
+                })->toArray();
+            } else {
+                $this->usarDadosExemplo();
+            }
         } catch (\Exception $e) {
-            $this->servicos = [];
-            $this->mensagemErro = 'Erro ao carregar serviços.';
+            $this->mensagemErro = 'ERRO no banco de serviços: ' . $e->getMessage();
+            $this->usarDadosExemplo();
         }
     }
 
-    public function updatedServicoId()
+    // ⚠️ TESTE: Carregamento real dos dias de funcionamento
+    public function carregarDiasFuncionamento()
     {
-        $this->atualizarServicoSelecionado();
-        $this->resetarHorarios();
-    }
-
-    public function updatedDataAgendamento()
-    {
-        $this->resetarHorarios();
-        if ($this->data_agendamento && $this->servico_id) {
-            $this->carregarHorariosDisponiveis();
-        }
-    }
-
-    private function atualizarServicoSelecionado()
-    {
-        if ($this->servico_id) {
-            $this->servicoSelecionado = collect($this->servicos)
-                ->firstWhere('id', $this->servico_id);
-        } else {
-            $this->servicoSelecionado = null;
-        }
-    }
-
-    private function resetarHorarios()
-    {
-        $this->horario_agendamento = '';
-        $this->horariosDisponiveis = [];
-    }
-
-    public function carregarHorariosDisponiveis()
-    {
-        if (!$this->data_agendamento || !$this->servico_id) {
-            return;
-        }
-
         try {
-            $data = $this->data_agendamento;
-            $servicoId = $this->servico_id;
+            $this->mensagemErro .= ' | Carregando dias de funcionamento...';
             
-            // Horários de funcionamento (podem vir de configuração)
-            $inicioFuncionamento = '08:00';
-            $fimFuncionamento = '18:00';
-            $intervaloMinutos = 30; // Intervalos de 30 minutos
+            $diasFuncionamento = DB::table('horarios_funcionamento')
+                ->where('ativo', 1)
+                ->pluck('dia_semana')
+                ->unique()
+                ->values()
+                ->toArray();
             
-            // Gerar todos os horários possíveis
-            $horarios = [];
-            $inicio = Carbon::createFromFormat('H:i', $inicioFuncionamento);
-            $fim = Carbon::createFromFormat('H:i', $fimFuncionamento);
-            
-            while ($inicio->lt($fim)) {
-                $horarios[] = $inicio->format('H:i');
-                $inicio->addMinutes($intervaloMinutos);
+            if (!empty($diasFuncionamento)) {
+                $this->diasFuncionamento = $diasFuncionamento;
+                $this->mensagemErro .= ' | Encontrados dias: ' . implode(',', $diasFuncionamento);
+            } else {
+                $this->diasFuncionamento = [1, 2, 3, 4, 5, 6]; // Fallback
+                $this->mensagemErro .= ' | Usando dias padrão (sem dados no banco)';
             }
             
-            // Buscar horários já ocupados
-            $horariosOcupados = DB::table('agendamentos')
-                ->where('data_agendamento', $data)
-                ->where('servico_id', $servicoId)
+        } catch (\Exception $e) {
+            $this->mensagemErro .= ' | ERRO dias funcionamento: ' . $e->getMessage();
+            $this->diasFuncionamento = [1, 2, 3, 4, 5, 6]; // Fallback
+        }
+    }
+
+    // ⚠️ TESTE: Verificação de dia disponível com banco
+    public function isDiaDisponivel($data)
+    {
+        try {
+            $dataCarbon = Carbon::parse($data);
+            $diaSemana = $dataCarbon->dayOfWeek;
+            
+            // Verificação simples primeiro
+            if (!in_array($diaSemana, $this->diasFuncionamento)) {
+                return false;
+            }
+            
+            // ⚠️ TESTE: Query no banco pode causar problema
+            $horarioFuncionamento = DB::table('horarios_funcionamento')
+                ->where('dia_semana', $diaSemana)
+                ->where('ativo', 1)
+                ->first();
+            
+            if (!$horarioFuncionamento) {
+                return false;
+            }
+            
+            // ⚠️ TESTE: Outra query no banco
+            $bloqueado = DB::table('bloqueios_agendamento')
+                ->where('ativo', 1)
+                ->where(function ($query) use ($dataCarbon) {
+                    $query->where('tipo', 'data_completa')
+                        ->where(function ($subQuery) use ($dataCarbon) {
+                            $subQuery->where('data_inicio', $dataCarbon->format('Y-m-d'));
+                        });
+                })
+                ->exists();
+            
+            return !$bloqueado;
+            
+        } catch (\Exception $e) {
+            // Em caso de erro, usa verificação simples
+            $diaSemana = Carbon::parse($data)->dayOfWeek;
+            return in_array($diaSemana, $this->diasFuncionamento);
+        }
+    }
+
+    private function usarDadosExemplo()
+    {
+        $this->servicos = [
+            [
+                'id' => 1, 'nome' => 'Consulta Teste', 'descricao' => 'Teste',
+                'preco' => 100.00, 'duracao' => 30, 'preco_formatado' => 'R$ 100,00',
+                'duracao_formatada' => '30 min', 'display_completo' => 'Consulta Teste - R$ 100,00 (30 min)'
+            ]
+        ];
+    }
+
+    public function inicializarCalendario()
+    {
+        try {
+            $hoje = now();
+            $this->mesAtual = $hoje->month;
+            $this->anoAtual = $hoje->year;
+        } catch (\Exception $e) {
+            $this->mensagemErro = 'Erro ao inicializar calendário: ' . $e->getMessage();
+        }
+    }
+
+    public function getNomesMesesProperty()
+    {
+        return [
+            1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+            5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+            9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+        ];
+    }
+
+    public function getDadosCalendarioProperty()
+    {
+        try {
+            $primeiroDiaDoMes = Carbon::createFromDate($this->anoAtual, $this->mesAtual, 1);
+            $ultimoDiaDoMes = $primeiroDiaDoMes->copy()->endOfMonth();
+            $hoje = now()->startOfDay();
+            
+            $inicioGrade = $primeiroDiaDoMes->copy()->startOfWeek(0);
+            $fimGrade = $ultimoDiaDoMes->copy()->endOfWeek(6);
+            
+            $dias = [];
+            $current = $inicioGrade->copy();
+            
+            while ($current <= $fimGrade) {
+                $isOutroMes = $current->month != $this->mesAtual;
+                $isPassado = $current < $hoje;
+                $diaSemana = $current->dayOfWeek;
+                
+                $isFuncionamento = in_array($diaSemana, $this->diasFuncionamento);
+                
+                // ⚠️ TESTE: Chamada que pode causar muitas queries
+                $isDisponivel = false;
+                if (!$isOutroMes && !$isPassado && $isFuncionamento) {
+                    $isDisponivel = $this->isDiaDisponivel($current);
+                }
+                
+                $dias[] = [
+                    'data' => $current->format('Y-m-d'),
+                    'dia' => $current->day,
+                    'isOutroMes' => $isOutroMes,
+                    'isPassado' => $isPassado,
+                    'isFuncionamento' => $isFuncionamento,
+                    'isDisponivel' => $isDisponivel,
+                    'isSelecionado' => $this->dataSelecionada === $current->format('Y-m-d'),
+                    'isHoje' => $current->isSameDay($hoje)
+                ];
+                
+                $current->addDay();
+                
+                if (count($dias) > 50) {
+                    $this->mensagemErro .= ' | Loop detectado no calendário - parado em ' . count($dias) . ' dias';
+                    break;
+                }
+            }
+            
+            return $dias;
+            
+        } catch (\Exception $e) {
+            $this->mensagemErro .= ' | Erro no grid do calendário: ' . $e->getMessage();
+            return [];
+        }
+    }
+
+    public function selecionarData($data)
+    {
+        try {
+            $this->mensagemErro = 'Selecionando data: ' . $data;
+            $this->dataSelecionada = $data;
+            $this->dataAgendamento = $data;
+            
+            // ⚠️ TESTE CRÍTICO: Carregamento de horários
+            if ($this->servico_id) {
+                $this->mensagemErro .= ' | Tentando carregar horários...';
+                $this->carregarHorarios($data);
+            }
+        } catch (\Exception $e) {
+            $this->mensagemErro = 'ERRO em selecionarData: ' . $e->getMessage();
+        }
+    }
+
+    // ⚠️ PRINCIPAL SUSPEITO: Carregamento de horários
+    public function carregarHorarios($data)
+    {
+        try {
+            $this->mensagemErro .= ' | Carregando horários para ' . $data;
+            
+            $dataCarbon = Carbon::parse($data);
+            $diaSemana = $dataCarbon->dayOfWeek;
+            
+            // Query 1: Horário de funcionamento
+            $horarioFuncionamento = DB::table('horarios_funcionamento')
+                ->where('dia_semana', $diaSemana)
+                ->where('ativo', 1)
+                ->first();
+            
+            if (!$horarioFuncionamento) {
+                $this->mensagemErro .= ' | Sem horário de funcionamento para este dia';
+                return;
+            }
+            
+            $this->mensagemErro .= ' | Horário funcionamento encontrado';
+            
+            // ⚠️ ESTE MÉTODO PODE CAUSAR LOOP INFINITO
+            $intervalo = $this->getDuracaoServicoSelecionado();
+            $this->mensagemErro .= ' | Intervalo: ' . $intervalo . ' min';
+            
+            $dataStr = $dataCarbon->format('Y-m-d');
+            
+            // Query 2: Agendamentos ocupados
+            $agendamentosOcupados = DB::table('agendamentos')
+                ->where('data_agendamento', $dataStr)
+                ->where('servico_id', $this->servico_id)
                 ->whereIn('status', ['pendente', 'confirmado'])
                 ->where('ativo', 1)
-                // Se está reagendando, excluir o agendamento original
-                ->when($this->reagendandoId, function($query) {
-                    $query->where('id', '!=', $this->reagendandoId);
-                })
                 ->pluck('horario_agendamento')
                 ->map(function($horario) {
                     return Carbon::parse($horario)->format('H:i');
                 })
                 ->toArray();
-            
-            // Filtrar horários disponíveis
-            $this->horariosDisponiveis = array_diff($horarios, $horariosOcupados);
+                
+            $this->mensagemErro .= ' | Agendamentos ocupados: ' . count($agendamentosOcupados);
             
         } catch (\Exception $e) {
-            $this->horariosDisponiveis = [];
-            $this->mensagemErro = 'Erro ao carregar horários disponíveis.';
+            $this->mensagemErro .= ' | ERRO carregarHorarios: ' . $e->getMessage();
         }
     }
 
-    public function salvar()
+    // ⚠️ MÉTODO SUSPEITO: Pode causar loop infinito
+    public function getDuracaoServicoSelecionado()
     {
-        $this->carregando = true;
-        $this->validate();
-
         try {
-            if ($this->reagendandoId) {
-                // Reagendar agendamento existente
-                $this->reagendarAgendamento();
-            } else {
-                // Criar novo agendamento
-                $this->criarNovoAgendamento();
+            if (!$this->servico_id) {
+                return 30;
             }
             
-        } catch (\Exception $e) {
-            $this->mensagemErro = 'Erro ao processar agendamento: ' . $e->getMessage();
-        } finally {
-            $this->carregando = false;
-        }
-    }
-
-    private function criarNovoAgendamento()
-    {
-        DB::transaction(function () {
-            $agendamentoId = DB::table('agendamentos')->insertGetId([
-                'user_id' => Auth::id(),
-                'servico_id' => $this->servico_id,
-                'data_agendamento' => $this->data_agendamento,
-                'horario_agendamento' => $this->horario_agendamento,
-                'status' => 'pendente',
-                'observacoes' => $this->observacoes,
-                'ativo' => 1,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-
-            // Log de auditoria
-            $this->criarLogAuditoria($agendamentoId, 'criacao');
-        });
-
-        session()->flash('sucesso', 'Agendamento criado com sucesso! Aguarde a confirmação.');
-        return redirect()->route('usuario.meus-agendamentos');
-    }
-
-    private function reagendarAgendamento()
-    {
-        DB::transaction(function () {
-            DB::table('agendamentos')
-                ->where('id', $this->reagendandoId)
-                ->update([
-                    'servico_id' => $this->servico_id,
-                    'data_agendamento' => $this->data_agendamento,
-                    'horario_agendamento' => $this->horario_agendamento,
-                    'status' => 'pendente', // Volta para pendente
-                    'observacoes' => $this->observacoes,
-                    'updated_at' => now()
-                ]);
-
-            // Log de auditoria
-            $this->criarLogAuditoria($this->reagendandoId, 'reagendamento');
-        });
-
-        session()->flash('sucesso', 'Agendamento reagendado com sucesso! Aguarde a confirmação.');
-        return redirect()->route('usuario.meus-agendamentos');
-    }
-
-    private function criarLogAuditoria($agendamentoId, $acao)
-    {
-        try {
-            DB::table('logs_agendamento')->insert([
-                'agendamento_id' => $agendamentoId,
-                'user_id' => Auth::id(),
-                'acao' => $acao,
-                'descricao' => "Agendamento {$acao} pelo usuário",
-                'dados_antes' => $this->reagendandoId ? json_encode([
-                    'data_anterior' => $this->agendamentoOriginal->data_agendamento ?? null,
-                    'horario_anterior' => $this->agendamentoOriginal->horario_agendamento ?? null,
-                ]) : null,
-                'dados_depois' => json_encode([
-                    'servico_id' => $this->servico_id,
-                    'data_agendamento' => $this->data_agendamento,
-                    'horario_agendamento' => $this->horario_agendamento,
-                ]),
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'created_at' => now()
-            ]);
-        } catch (\Exception $e) {
-            // Log falhou, mas não deve quebrar o fluxo
-        }
-    }
-
-    public function cancelar()
-    {
-        return redirect()->route('usuario.meus-agendamentos');
-    }
-
-    // Validações personalizadas
-    private function validarDiaFuncionamento($data, $fail)
-    {
-        try {
-            $dataCarbon = Carbon::parse($data);
-            // 1 = Segunda, 2 = Terça, ..., 6 = Sábado, 0 = Domingo
-            $diasFuncionamento = [1, 2, 3, 4, 5, 6]; // Segunda a Sábado
+            // ⚠️ ESTA QUERY PODE ESTAR EM LOOP
+            $servico = DB::table('servicos')
+                ->where('id', $this->servico_id)
+                ->where('ativo', 1)
+                ->first();
             
-            if (!in_array($dataCarbon->dayOfWeek, $diasFuncionamento)) {
-                $fail('Não funcionamos neste dia. Funcionamos de segunda à sábado.');
+            if ($servico) {
+                return (int) ($servico->duracao_minutos ?? $servico->duracao ?? 30);
+            }
+            
+            return 30;
+        } catch (\Exception $e) {
+            return 30;
+        }
+    }
+
+    // ⚠️ LISTENER SUSPEITO: Pode causar loop quando serviço muda
+    public function updatedServicoId()
+    {
+        try {
+            $this->mensagemErro = 'Serviço alterado para: ' . $this->servico_id;
+            
+            // ⚠️ SE HOUVER DATA SELECIONADA, PODE ENTRAR EM LOOP
+            if ($this->dataSelecionada && $this->servico_id) {
+                $this->mensagemErro .= ' | Recarregando horários...';
+                $this->carregarHorarios($this->dataSelecionada);
             }
         } catch (\Exception $e) {
-            $fail('Data inválida.');
+            $this->mensagemErro = 'ERRO em updatedServicoId: ' . $e->getMessage();
         }
     }
 
-    private function validarHorarioDisponivel($horario, $fail)
+    public function mesAnterior()
     {
-        if (!in_array($horario, $this->horariosDisponiveis)) {
-            $fail('Horário não disponível. Selecione um horário disponível.');
+        if ($this->mesAtual == 1) {
+            $this->mesAtual = 12;
+            $this->anoAtual--;
+        } else {
+            $this->mesAtual--;
+        }
+    }
+
+    public function mesProximo()
+    {
+        if ($this->mesAtual == 12) {
+            $this->mesAtual = 1;
+            $this->anoAtual++;
+        } else {
+            $this->mesAtual++;
         }
     }
 
     public function render()
     {
-        return view('livewire.usuario.novo-agendamento', [
-            'servicos' => $this->servicos,
-            'servicoSelecionado' => $this->servicoSelecionado,
-            'horariosDisponiveis' => $this->horariosDisponiveis,
-            'reagendando' => (bool) $this->reagendandoId,
-            'agendamentoOriginal' => $this->agendamentoOriginal
-        ])->layout('layouts.cliente');
+        return view('livewire.usuario.novo-agendamento');
     }
 }
