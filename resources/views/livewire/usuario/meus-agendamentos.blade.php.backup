@@ -1,0 +1,278 @@
+@extends('layouts.clinica')
+
+@section('title', 'Meus Agendamentos - Clínica Vida Saudável')
+
+@section('content')
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {{-- ✅ HEADER DA PÁGINA --}}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex items-center mb-4 lg:mb-0">
+                    <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                        <i class="fas fa-calendar-check text-xl text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            Meus Agendamentos
+                        </h1>
+                        <p class="text-gray-600 mt-1">
+                             Olá 2, <strong>{{ Auth::user()->name }}</strong>! Visualize e gerencie todos os seus agendamentos
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <a href="/perfil" 
+                       class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-center">
+                        <i class="fas fa-user mr-2"></i>
+                        Meu Perfil
+                    </a>
+                    <a href="/agendar" 
+                       class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Novo Agendamento
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {{-- ✅ ESTATÍSTICAS RÁPIDAS --}}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            
+            {{-- TOTAL --}}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-md bg-blue-100">
+                        <i class="fas fa-calendar text-blue-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-500">Total</p>
+                        <p class="text-lg font-semibold text-gray-900" id="total-agendamentos">-</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- PENDENTES --}}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-md bg-yellow-100">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-500">Pendentes</p>
+                        <p class="text-lg font-semibold text-gray-900" id="pendentes-agendamentos">-</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- CONFIRMADOS --}}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-md bg-green-100">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-500">Confirmados</p>
+                        <p class="text-lg font-semibold text-gray-900" id="confirmados-agendamentos">-</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- PRÓXIMO --}}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-md bg-purple-100">
+                        <i class="fas fa-star text-purple-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-500">Próximo</p>
+                        <p class="text-sm font-semibold text-gray-900" id="proximo-agendamento">Nenhum</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ✅ COMPONENTE LIVEWIRE DE LISTAGEM --}}
+        @livewire('usuario.meus-agendamentos')
+
+        {{-- ✅ INFORMAÇÕES ÚTEIS --}}
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <h4 class="font-medium text-blue-800 mb-2">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Como funciona
+                </h4>
+                <p class="text-blue-700 text-sm">
+                    Faça seus agendamentos online e acompanhe o status em tempo real. Receba notificações por email.
+                </p>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                <h4 class="font-medium text-green-800 mb-2">
+                    <i class="fas fa-clock mr-2"></i>
+                    Horários
+                </h4>
+                <p class="text-green-700 text-sm">
+                    Nosso atendimento funciona de segunda a sexta, das 8h às 18h. Agendamentos com 24h de antecedência.
+                </p>
+            </div>
+            
+            <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <h4 class="font-medium text-orange-800 mb-2">
+                    <i class="fas fa-phone mr-2"></i>
+                    Contato
+                </h4>
+                <p class="text-orange-700 text-sm">
+                    Dúvidas? Entre em contato pelo WhatsApp (11) 99999-9999 ou telefone (11) 3000-0000.
+                </p>
+            </div>
+        </div>
+
+        {{-- ✅ LINKS ÚTEIS --}}
+        <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Links Úteis</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <a href="/perfil" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <i class="fas fa-user-edit text-blue-600 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-900">Editar Perfil</div>
+                        <div class="text-sm text-gray-500">Atualize suas informações</div>
+                    </div>
+                </a>
+                
+                <a href="/agendar" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <i class="fas fa-calendar-plus text-green-600 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-900">Novo Agendamento</div>
+                        <div class="text-sm text-gray-500">Agende uma consulta</div>
+                    </div>
+                </a>
+                
+                <a href="/" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <i class="fas fa-home text-purple-600 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-900">Site Institucional</div>
+                        <div class="text-sm text-gray-500">Conheça nossa clínica</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ✅ NOTIFICATION COMPONENT --}}
+<div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+{{-- ✅ JAVASCRIPT PARA FUNCIONALIDADES EXTRAS --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ✅ ATUALIZAR ESTATÍSTICAS
+    function atualizarEstatisticas() {
+        // Contar elementos visíveis na listagem (aproximação)
+        const agendamentos = document.querySelectorAll('[wire\\:click^="visualizarDetalhes"]');
+        document.getElementById('total-agendamentos').textContent = agendamentos.length;
+        
+        // Seria melhor fazer via Livewire, mas esta é uma aproximação
+        const pendentes = document.querySelectorAll('.bg-yellow-100').length;
+        const confirmados = document.querySelectorAll('.bg-green-100').length;
+        
+        document.getElementById('pendentes-agendamentos').textContent = pendentes;
+        document.getElementById('confirmados-agendamentos').textContent = confirmados;
+    }
+
+    // ✅ LISTENER PARA NOTIFICAÇÕES LIVEWIRE
+    window.addEventListener('mostrar-notificacao', function(event) {
+        mostrarNotificacao(event.detail.tipo, event.detail.mensagem);
+    });
+
+    // ✅ FUNÇÃO PARA MOSTRAR NOTIFICAÇÕES
+    function mostrarNotificacao(tipo, mensagem) {
+        const container = document.getElementById('notification-container');
+        
+        const cores = {
+            'success': 'bg-green-500',
+            'error': 'bg-red-500',
+            'info': 'bg-blue-500',
+            'warning': 'bg-yellow-500'
+        };
+
+        const icones = {
+            'success': 'fas fa-check-circle',
+            'error': 'fas fa-exclamation-circle',
+            'info': 'fas fa-info-circle',
+            'warning': 'fas fa-exclamation-triangle'
+        };
+
+        const notification = document.createElement('div');
+        notification.className = `${cores[tipo] || 'bg-gray-500'} text-white px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 max-w-sm`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="${icones[tipo] || 'fas fa-info-circle'} mr-3"></i>
+                <span class="font-medium">${mensagem}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        container.appendChild(notification);
+
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+
+    // ✅ ATUALIZAR ESTATÍSTICAS PERIODICAMENTE
+    setInterval(atualizarEstatisticas, 2000);
+    
+    // ✅ ATUALIZAÇÃO INICIAL
+    setTimeout(atualizarEstatisticas, 1000);
+});
+</script>
+
+{{-- ✅ STYLES EXTRAS PARA ANIMAÇÕES --}}
+<style>
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+#notification-container > div {
+    animation: slideInRight 0.3s ease-out;
+}
+
+/* Loading state para cards */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+</style>
+@endsection

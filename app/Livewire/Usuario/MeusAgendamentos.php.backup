@@ -1,0 +1,477 @@
+<?php
+
+namespace App\Livewire\Usuario;
+
+use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
+class MeusAgendamentos extends Component
+{
+    use WithPagination;
+
+    // ✅ PROPRIEDADES PÚBLICAS
+    public $filtroStatus = 'todos';
+    public $filtroData = '';
+    public $busca = '';
+    public $agendamentoDetalhes = null;
+    public $mostrarModal = false;
+    
+    // ✅ PAGINAÇÃO
+    protected $paginationTheme = 'tailwind';
+    
+    // ✅ LISTENERS
+    protected $listeners = [
+        'agendamentoAtualizado' => 'atualizarListagem',
+        'fecharModal' => 'fecharModalDetalhes'
+    ];
+
+    /**
+     * ✅ INICIALIZAR COMPONENTE
+     */
+    public function mount()
+    {
+        // Log de acesso
+        Log::info('Usuário acessou listagem de agendamentos', [
+            'user_id' => auth()->id(),
+            'email' => auth()->user()->email
+        ]);
+    }
+
+    /**
+     * ✅ RESETAR PAGINAÇÃO QUANDO FILTROS MUDAREM
+     */
+    public function updatingFiltroStatus()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroData()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingBusca()
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * ✅ CARREGAR AGENDAMENTOS COM FILTROS E PAGINAÇÃO
+     */
+    public function getAgendamentosProperty()
+    {
+        try {
+            $query = DB::table('agendamentos as a')
+                ->leftJoin('servicos as s', 'a.servico_id', '=', 's.id')
+                ->where('a.user_id', auth()->id())
+                ->where('a.ativo', 1)
+                ->select([
+                    'a.id',
+                    'a.data_agendamento',
+                    'a.horario_agendamento',
+                    'a.observacoes',
+                    'a.status',
+                    'a.created_at',
+                    'a.updated_at',
+                    'a.cliente_nome',
+                    'a.cliente_email',
+                    'a.cliente_telefone',
+                    's.nome as servico_nome',
+                    's.preco as servico_preco',
+                    's.duracao_minutos as servico_duracao',
+                    's.descricao as servico_descricao'
+                ]);
+
+            // ✅ FILTRO POR STATUS
+            if ($this->filtroStatus !== 'todos') {
+                $query->where('a.status', $this->filtroStatus);
+            }
+
+            // ✅ FILTRO POR DATA
+            if ($this->filtroData) {
+                switch ($this->filtroData) {
+                    case 'hoje':
+                        $query->whereDate('a.data_agendamento', now()->toDateString());
+                        break;
+                    case 'semana':
+                        $query->whereBetween('a.data_agendamento', [
+                            now()->startOfWeek()->toDateString(),
+                            now()->endOfWeek()->toDateString()
+                        ]);
+                        break;
+                    case 'mes':
+                        $query->whereMonth('a.data_agendamento', now()->month)
+                              ->whereYear('a.data_agendamento', now()->year);
+                        break;
+                    case 'futuros':
+                        $query->where('a.data_agendamento', '>=', now()->toDateString());
+                        break;
+                    case 'passados':
+                        $query->where('a.data_agendamento', '<', now()->toDateString());
+                        break;
+                }
+            }
+
+            // ✅ BUSCA POR TEXTO
+            if ($this->busca) {
+                $busca = '%' . $this->busca . '%';
+                $query->where(function ($q) use ($busca) {
+                    $q->where('s.nome', 'like', $busca)
+                      ->orWhere('a.observacoes', 'like', $busca)
+                      ->orWhere('a.status', 'like', $busca);
+                });
+            }
+
+            // ✅ ORDENAÇÃO
+            $agendamentos = $query->orderBy('a.data_agendamento', 'desc')
+                                  ->orderBy('a.horario_agendamento', 'desc')
+                                  ->paginate(10);
+
+            // ✅ PROCESSAR DADOS
+            $agendamentos->getCollection()->transform(function ($agendamento) {
+                return $this->processarAgendamento($agendamento);
+            });
+
+            return $agendamentos;
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao carregar agendamentos do usuário', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return collect()->paginate(10);
+        }
+    }
+
+    /**
+     * ✅ PROCESSAR DADOS DO AGENDAMENTO
+     */
+    private function processarAgendamento($agendamento)
+    {
+        $dataAgendamento = Carbon::parse($agendamento->data_agendamento);
+        $horarioAgendamento = Carbon::parse($agendamento->horario_agendamento);
+        $agora = now();
+
+        return (object) [
+            'id' => $agendamento->id,
+            'codigo' => '#' . str_pad($agendamento->id, 6, '0', STR_PAD_LEFT),
+            
+            // Datas
+            'data_agendamento' => $agendamento->data_agendamento,
+            'horario_agendamento' => $agendamento->horario_agendamento,
+            'data_formatada' => $dataAgendamento->format('d/m/Y'),
+            'horario_formatado' => $horarioAgendamento->format('H:i'),
+            'data_completa' => $dataAgendamento->format('d/m/Y') . ' às ' . $horarioAgendamento->format('H:i'),
+            'data_legivel' => $this->formatarDataLegivel($dataAgendamento),
+            'dia_semana' => $dataAgendamento->format('l'),
+            'dia_semana_pt' => $this->traduzirDiaSemana($dataAgendamento->format('l')),
+            
+            // Status e classificações
+            'status' => $agendamento->status,
+            'status_cor' => $this->getStatusCor($agendamento->status),
+            'status_texto' => $this->getStatusTexto($agendamento->status),
+            'status_icone' => $this->getStatusIcone($agendamento->status),
+            
+            // Classificações temporais
+            'is_futuro' => $dataAgendamento->isFuture(),
+            'is_hoje' => $dataAgendamento->isToday(),
+            'is_passado' => $dataAgendamento->isPast(),
+            'is_proximo' => $dataAgendamento->isToday() || ($dataAgendamento->isTomorrow()),
+            'dias_restantes' => $dataAgendamento->diffInDays($agora, false),
+            
+            // Serviço
+            'servico_nome' => $agendamento->servico_nome ?? 'Serviço não identificado',
+            'servico_preco' => $agendamento->servico_preco ?? 0,
+            'servico_preco_formatado' => 'R$ ' . number_format($agendamento->servico_preco ?? 0, 2, ',', '.'),
+            'servico_duracao' => $agendamento->servico_duracao ?? 30,
+            'servico_duracao_formatada' => ($agendamento->servico_duracao ?? 30) . ' min',
+            'servico_descricao' => $agendamento->servico_descricao ?? '',
+            
+            // Dados do cliente
+            'cliente_nome' => $agendamento->cliente_nome,
+            'cliente_email' => $agendamento->cliente_email,
+            'cliente_telefone' => $agendamento->cliente_telefone,
+            
+            // Observações e timestamps
+            'observacoes' => $agendamento->observacoes,
+            'created_at' => $agendamento->created_at,
+            'updated_at' => $agendamento->updated_at,
+            'created_at_formatado' => Carbon::parse($agendamento->created_at)->format('d/m/Y H:i'),
+            'updated_at_formatado' => Carbon::parse($agendamento->updated_at)->format('d/m/Y H:i'),
+            
+            // Ações disponíveis
+            'pode_cancelar' => $this->podeSerCancelado($agendamento),
+            'pode_remarcar' => $this->podeSerRemarcado($agendamento),
+        ];
+    }
+
+    /**
+     * ✅ VERIFICAR SE AGENDAMENTO PODE SER CANCELADO
+     */
+    private function podeSerCancelado($agendamento)
+    {
+        $dataAgendamento = Carbon::parse($agendamento->data_agendamento);
+        $agora = now();
+        
+        // Só pode cancelar se:
+        // 1. Status é pendente ou confirmado
+        // 2. Data é futura
+        // 3. Falta pelo menos 24h
+        return in_array($agendamento->status, ['pendente', 'confirmado']) &&
+               $dataAgendamento->isFuture() &&
+               $dataAgendamento->diffInHours($agora) >= 24;
+    }
+
+    /**
+     * ✅ VERIFICAR SE AGENDAMENTO PODE SER REMARCADO
+     */
+    private function podeSerRemarcado($agendamento)
+    {
+        $dataAgendamento = Carbon::parse($agendamento->data_agendamento);
+        $agora = now();
+        
+        // Só pode remarcar se:
+        // 1. Status é pendente ou confirmado
+        // 2. Data é futura
+        // 3. Falta pelo menos 48h
+        return in_array($agendamento->status, ['pendente', 'confirmado']) &&
+               $dataAgendamento->isFuture() &&
+               $dataAgendamento->diffInHours($agora) >= 48;
+    }
+
+    /**
+     * ✅ FORMATAR DATA LEGÍVEL
+     */
+    private function formatarDataLegivel($data)
+    {
+        $agora = now();
+        
+        if ($data->isToday()) {
+            return 'Hoje';
+        } elseif ($data->isTomorrow()) {
+            return 'Amanhã';
+        } elseif ($data->isYesterday()) {
+            return 'Ontem';
+        } elseif ($data->diffInDays($agora) <= 7 && $data->isFuture()) {
+            return 'Em ' . $data->diffInDays($agora) . ' dias';
+        } elseif ($data->diffInDays($agora) <= 7 && $data->isPast()) {
+            return 'Há ' . $data->diffInDays($agora) . ' dias';
+        } else {
+            return $data->format('d/m/Y');
+        }
+    }
+
+    /**
+     * ✅ TRADUZIR DIA DA SEMANA
+     */
+    private function traduzirDiaSemana($diaSemana)
+    {
+        $dias = [
+            'Monday' => 'Segunda-feira',
+            'Tuesday' => 'Terça-feira', 
+            'Wednesday' => 'Quarta-feira',
+            'Thursday' => 'Quinta-feira',
+            'Friday' => 'Sexta-feira',
+            'Saturday' => 'Sábado',
+            'Sunday' => 'Domingo'
+        ];
+        
+        return $dias[$diaSemana] ?? $diaSemana;
+    }
+
+    /**
+     * ✅ OBTER COR DO STATUS
+     */
+    private function getStatusCor($status)
+    {
+        return match($status) {
+            'pendente' => 'yellow',
+            'confirmado' => 'green',
+            'cancelado' => 'red',
+            'concluido' => 'blue',
+            default => 'gray'
+        };
+    }
+
+    /**
+     * ✅ OBTER TEXTO DO STATUS
+     */
+    private function getStatusTexto($status)
+    {
+        return match($status) {
+            'pendente' => 'Aguardando Confirmação',
+            'confirmado' => 'Confirmado',
+            'cancelado' => 'Cancelado',
+            'concluido' => 'Concluído',
+            default => 'Status Desconhecido'
+        };
+    }
+
+    /**
+     * ✅ OBTER ÍCONE DO STATUS
+     */
+    private function getStatusIcone($status)
+    {
+        return match($status) {
+            'pendente' => 'fas fa-clock',
+            'confirmado' => 'fas fa-check-circle',
+            'cancelado' => 'fas fa-times-circle',
+            'concluido' => 'fas fa-flag-checkered',
+            default => 'fas fa-question-circle'
+        };
+    }
+
+    /**
+     * ✅ VISUALIZAR DETALHES DO AGENDAMENTO
+     */
+    public function visualizarDetalhes($agendamentoId)
+    {
+        try {
+            $agendamento = DB::table('agendamentos as a')
+                ->leftJoin('servicos as s', 'a.servico_id', '=', 's.id')
+                ->where('a.id', $agendamentoId)
+                ->where('a.user_id', auth()->id())
+                ->where('a.ativo', 1)
+                ->select([
+                    'a.*',
+                    's.nome as servico_nome',
+                    's.preco as servico_preco',
+                    's.duracao_minutos as servico_duracao',
+                    's.descricao as servico_descricao'
+                ])
+                ->first();
+
+            if ($agendamento) {
+                $this->agendamentoDetalhes = $this->processarAgendamento($agendamento);
+                $this->mostrarModal = true;
+                
+                Log::info('Usuário visualizou detalhes do agendamento', [
+                    'user_id' => auth()->id(),
+                    'agendamento_id' => $agendamentoId
+                ]);
+            } else {
+                $this->dispatch('mostrar-notificacao', [
+                    'tipo' => 'error',
+                    'mensagem' => 'Agendamento não encontrado.'
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao visualizar detalhes do agendamento', [
+                'user_id' => auth()->id(),
+                'agendamento_id' => $agendamentoId,
+                'error' => $e->getMessage()
+            ]);
+
+            $this->dispatch('mostrar-notificacao', [
+                'tipo' => 'error',
+                'mensagem' => 'Erro ao carregar detalhes do agendamento.'
+            ]);
+        }
+    }
+
+    /**
+     * ✅ FECHAR MODAL DE DETALHES
+     */
+    public function fecharModalDetalhes()
+    {
+        $this->mostrarModal = false;
+        $this->agendamentoDetalhes = null;
+    }
+
+    /**
+     * ✅ CANCELAR AGENDAMENTO
+     */
+    public function cancelarAgendamento($agendamentoId)
+    {
+        try {
+            $agendamento = DB::table('agendamentos')
+                ->where('id', $agendamentoId)
+                ->where('user_id', auth()->id())
+                ->where('ativo', 1)
+                ->first();
+
+            if (!$agendamento) {
+                $this->dispatch('mostrar-notificacao', [
+                    'tipo' => 'error',
+                    'mensagem' => 'Agendamento não encontrado.'
+                ]);
+                return;
+            }
+
+            // Verificar se pode ser cancelado
+            if (!$this->podeSerCancelado($agendamento)) {
+                $this->dispatch('mostrar-notificacao', [
+                    'tipo' => 'error',
+                    'mensagem' => 'Este agendamento não pode ser cancelado. Entre em contato conosco.'
+                ]);
+                return;
+            }
+
+            // Atualizar status
+            DB::table('agendamentos')
+                ->where('id', $agendamentoId)
+                ->update([
+                    'status' => 'cancelado',
+                    'updated_at' => now()
+                ]);
+
+            Log::info('Agendamento cancelado pelo usuário', [
+                'user_id' => auth()->id(),
+                'agendamento_id' => $agendamentoId
+            ]);
+
+            $this->fecharModalDetalhes();
+            $this->dispatch('mostrar-notificacao', [
+                'tipo' => 'success',
+                'mensagem' => 'Agendamento cancelado com sucesso!'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao cancelar agendamento', [
+                'user_id' => auth()->id(),
+                'agendamento_id' => $agendamentoId,
+                'error' => $e->getMessage()
+            ]);
+
+            $this->dispatch('mostrar-notificacao', [
+                'tipo' => 'error',
+                'mensagem' => 'Erro ao cancelar agendamento. Tente novamente.'
+            ]);
+        }
+    }
+
+    /**
+     * ✅ ATUALIZAR LISTAGEM
+     */
+    public function atualizarListagem()
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * ✅ LIMPAR FILTROS
+     */
+    public function limparFiltros()
+    {
+        $this->filtroStatus = 'todos';
+        $this->filtroData = '';
+        $this->busca = '';
+        $this->resetPage();
+    }
+
+    /**
+     * ✅ RENDER
+     */
+    public function render()
+    {
+        return view('livewire.usuario.meus-agendamentos', [
+            'agendamentos' => $this->agendamentos
+        ]);
+    }
+}

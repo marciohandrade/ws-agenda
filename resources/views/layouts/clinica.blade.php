@@ -11,7 +11,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- ✅ SÓ O MENU FICA AQUI -->
+    <!-- ✅ MENU COM LINK DE LOGIN ADICIONADO -->
     <header class="fixed top-0 w-full bg-white shadow z-50">
         <nav class="bg-white shadow-md fixed w-full top-0 left-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -35,10 +35,49 @@
                     <a href="/#especialidades" class="menu-link px-3 py-2 rounded transition" data-section="especialidades">Especialidades</a>
                     <a href="/#equipe" class="menu-link px-3 py-2 rounded transition" data-section="equipe">Equipe</a>
                     
-                    <!-- Botão Agendar - sempre destacado -->
-                    <a href="/agendar" class="menu-link px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-medium {{ request()->is('agendar*') ? 'bg-blue-800' : '' }}">
-                        <i class="fas fa-calendar-plus mr-2"></i>Agendar Online
-                    </a>
+                    {{-- ✅ SISTEMA DE MENU BASEADO EM AUTENTICAÇÃO --}}
+                    @auth
+                        {{-- ✅ Para usuários logados - dropdown simples --}}
+                        <div class="relative group">
+                            <button class="flex items-center px-3 py-2 rounded transition hover:bg-blue-50 text-blue-700">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span>{{ Auth::user()->name }}</span>
+                                <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                            </button>
+                            
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <div class="py-2">
+                                    <a href="/perfil" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition">
+                                        <i class="fas fa-user mr-3"></i>Meu Perfil
+                                    </a>
+                                    <a href="/meus-agendamentos" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition">
+                                        <i class="fas fa-calendar-check mr-3"></i>Meus Agendamentos
+                                    </a>
+                                    <a href="/agendar" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition">
+                                        <i class="fas fa-plus mr-3"></i>Novo Agendamento
+                                    </a>
+                                    <div class="border-t border-gray-100 mt-2 pt-2">
+                                        <form action="/logout" method="POST" class="inline w-full">
+                                            @csrf
+                                            <button type="submit" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                                <i class="fas fa-sign-out-alt mr-3"></i>Sair
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        {{-- ✅ Para usuários não logados - links simples --}}
+                        <a href="/login" class="menu-link px-3 py-2 rounded transition hover:bg-gray-100">
+                            <i class="fas fa-sign-in-alt mr-1"></i>Entrar
+                        </a>
+                        
+                        <!-- Botão Agendar - sempre destacado -->
+                        <a href="/agendar" class="menu-link px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-medium {{ request()->is('agendar*') ? 'bg-blue-800' : '' }}">
+                            <i class="fas fa-calendar-plus mr-2"></i>Agendar Online
+                        </a>
+                    @endauth
                     
                     <a href="/#contato" class="menu-link px-3 py-2 rounded transition" data-section="contato">Contato</a>
                 </div>
@@ -52,10 +91,46 @@
             <a href="/#especialidades" class="menu-link block px-3 py-2 rounded transition" data-section="especialidades">Especialidades</a>
             <a href="/#equipe" class="menu-link block px-3 py-2 rounded transition" data-section="equipe">Equipe</a>
             
-            <!-- Botão Agendar Mobile -->
-            <a href="/agendar" class="menu-link block px-4 py-3 bg-blue-600 text-white rounded-lg transition font-medium text-center {{ request()->is('agendar*') ? 'bg-blue-800' : '' }}">
-                <i class="fas fa-calendar-plus mr-2"></i>Agendar Online
-            </a>
+            {{-- ✅ Menu Mobile baseado em autenticação --}}
+            @auth
+                <div class="border-t border-gray-200 pt-3 mt-3">
+                    <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Minha Conta
+                    </div>
+                    <a href="/perfil" class="menu-link flex items-center px-3 py-2 rounded transition">
+                        <i class="fas fa-user mr-3"></i>Meu Perfil
+                    </a>
+                    <a href="/meus-agendamentos" class="menu-link flex items-center px-3 py-2 rounded transition">
+                        <i class="fas fa-calendar-check mr-3"></i>Meus Agendamentos
+                    </a>
+                    <a href="/agendar" class="menu-link flex items-center px-3 py-2 rounded transition">
+                        <i class="fas fa-plus mr-3"></i>Novo Agendamento
+                    </a>
+                    
+                    <div class="border-t border-gray-200 mt-3 pt-3">
+                        <div class="px-3 py-1 text-xs text-gray-500">
+                            Logado como: <strong>{{ Auth::user()->name }}</strong>
+                        </div>
+                        <form action="/logout" method="POST" class="mt-2">
+                            @csrf
+                            <button type="submit" class="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded transition">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <div class="border-t border-gray-200 pt-3 mt-3">
+                    <a href="/login" class="menu-link flex items-center px-3 py-2 rounded transition">
+                        <i class="fas fa-sign-in-alt mr-3"></i>Entrar
+                    </a>
+                    
+                    <!-- Botão Agendar Mobile -->
+                    <a href="/agendar" class="menu-link block px-4 py-3 bg-blue-600 text-white rounded-lg transition font-medium text-center mt-2 {{ request()->is('agendar*') ? 'bg-blue-800' : '' }}">
+                        <i class="fas fa-calendar-plus mr-2"></i>Agendar Online
+                    </a>
+                </div>
+            @endauth
             
             <a href="/#contato" class="menu-link block px-3 py-2 rounded transition" data-section="contato">Contato</a>
             </div>
