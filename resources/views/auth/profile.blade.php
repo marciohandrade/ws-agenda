@@ -6,12 +6,12 @@
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {{-- ✅ HEADER DA PÁGINA --}}
+        {{-- ✅ HEADER DA PÁGINA COM PADRÃO VISUAL CONSISTENTE --}}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center mb-4 sm:mb-0">
                     <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                        <i class="fas fa-user text-xl text-blue-600"></i>
+                        <span class="text-xl text-blue-600">👤</span>
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Meu Perfil</h1>
@@ -22,14 +22,24 @@
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                     <a href="{{ route('meus-agendamentos') }}" 
                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-center">
-                        <i class="fas fa-calendar-check mr-2"></i>
+                        <span class="mr-2">📅</span>
                         Meus Agendamentos
                     </a>
                     <a href="/agendar" 
-                       class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center">
-                        <i class="fas fa-plus mr-2"></i>
+                       class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-center">
+                        <span class="mr-2">✅</span>
                         Novo Agendamento
                     </a>
+                    {{-- ✅ BOTÃO LOGOUT COM PADRÃO CONSISTENTE --}}
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" 
+                                onclick="return confirm('Tem certeza que deseja sair da sua conta?')"
+                                class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-center">
+                            <span class="mr-2">🚪</span>
+                            Sair
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -38,7 +48,7 @@
         @if (session('success'))
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6" id="success-message">
                 <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                    <span class="text-green-500 mr-3">✅</span>
                     <span class="text-green-800">{{ session('success') }}</span>
                 </div>
             </div>
@@ -47,7 +57,7 @@
         @if (session('error'))
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6" id="error-message">
                 <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                    <span class="text-red-500 mr-3">❌</span>
                     <span class="text-red-800">{{ session('error') }}</span>
                 </div>
             </div>
@@ -55,11 +65,11 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {{-- ✅ INFORMAÇÕES ATUAIS --}}
+            {{-- ✅ INFORMAÇÕES ATUAIS COM LOGOUT SECUNDÁRIO --}}
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                        <span class="mr-2 text-blue-500">ℹ️</span>
                         Informações Atuais
                     </h3>
                     
@@ -86,7 +96,7 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                 {{ $user->tipo_usuario === 'admin' ? 'bg-purple-100 text-purple-800' : 
                                    ($user->tipo_usuario === 'colaborador' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800') }}">
-                                <i class="fas fa-{{ $user->tipo_usuario === 'admin' ? 'user-shield' : ($user->tipo_usuario === 'colaborador' ? 'user-tie' : 'user') }} mr-1"></i>
+                                <span class="mr-1">{{ $user->tipo_usuario === 'admin' ? '🛡️' : ($user->tipo_usuario === 'colaborador' ? '👔' : '👤') }}</span>
                                 {{ ucfirst($user->tipo_usuario) }}
                             </span>
                         </div>
@@ -113,12 +123,39 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- ✅ ÁREA DE AÇÕES RÁPIDAS COM PADRÃO CONSISTENTE --}}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h4 class="text-sm font-medium text-gray-500 mb-3">Ações Rápidas</h4>
+                        <div class="space-y-2">
+                            <a href="/agendar" 
+                               class="w-full flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                                <span class="mr-2">✅</span>Novo Agendamento
+                            </a>
+                            <a href="{{ route('meus-agendamentos') }}" 
+                               class="w-full flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                                <span class="mr-2">📅</span>Ver Agendamentos
+                            </a>
+                            
+                            {{-- ✅ LOGOUT SECUNDÁRIO COM PADRÃO CONSISTENTE --}}
+                            <div class="pt-2 border-t border-gray-200">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" 
+                                            onclick="return confirm('Tem certeza que deseja encerrar sua sessão?')"
+                                            class="w-full flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                                        <span class="mr-2">🚪</span>Encerrar Sessão
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- ✅ DICAS DE SEGURANÇA --}}
                 <div class="bg-yellow-50 rounded-lg border border-yellow-200 p-4 mt-6">
                     <h4 class="text-yellow-800 font-medium mb-2 text-sm">
-                        <i class="fas fa-shield-alt mr-2"></i>
+                        <span class="mr-2">🛡️</span>
                         Dicas de Segurança
                     </h4>
                     <ul class="text-yellow-700 text-xs space-y-1">
@@ -126,15 +163,16 @@
                         <li>• Mantenha seus dados sempre atualizados</li>
                         <li>• Não compartilhe sua senha com terceiros</li>
                         <li>• Faça logout ao usar computadores públicos</li>
+                        <li>• <strong>Sempre saia da conta</strong> quando terminar</li>
                     </ul>
                 </div>
             </div>
 
-            {{-- ✅ FORMULÁRIO DE EDIÇÃO --}}
+            {{-- ✅ FORMULÁRIO DE EDIÇÃO (MANTIDO ORIGINAL) --}}
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6">
-                        <i class="fas fa-edit mr-2 text-green-500"></i>
+                        <span class="mr-2 text-green-500">✏️</span>
                         Editar Informações
                     </h3>
 
@@ -151,7 +189,7 @@
                                     {{-- NOME --}}
                                     <div>
                                         <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                                            <i class="fas fa-user mr-1 text-gray-500"></i>
+                                            <span class="mr-1 text-gray-500">👤</span>
                                             Nome Completo
                                         </label>
                                         <input 
@@ -170,7 +208,7 @@
                                     {{-- TELEFONE --}}
                                     <div>
                                         <label for="telefone" class="block text-sm font-medium text-gray-700 mb-2">
-                                            <i class="fas fa-phone mr-1 text-gray-500"></i>
+                                            <span class="mr-1 text-gray-500">📱</span>
                                             Telefone
                                         </label>
                                         <input 
@@ -190,7 +228,7 @@
                                 {{-- EMAIL --}}
                                 <div class="mt-4">
                                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-envelope mr-1 text-gray-500"></i>
+                                        <span class="mr-1 text-gray-500">📧</span>
                                         E-mail
                                     </label>
                                     <input 
@@ -216,7 +254,7 @@
                                     {{-- SENHA ATUAL --}}
                                     <div>
                                         <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
-                                            <i class="fas fa-key mr-1 text-gray-500"></i>
+                                            <span class="mr-1 text-gray-500">🔑</span>
                                             Senha Atual
                                         </label>
                                         <div class="relative">
@@ -227,7 +265,7 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('current_password') border-red-500 @enderror"
                                                 placeholder="Digite sua senha atual">
                                             <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600" onclick="togglePassword('current_password')">
-                                                <i class="fas fa-eye" id="current_password_icon"></i>
+                                                <span id="current_password_icon">👁️</span>
                                             </button>
                                         </div>
                                         @error('current_password')
@@ -239,7 +277,7 @@
                                         {{-- NOVA SENHA --}}
                                         <div>
                                             <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                                                <i class="fas fa-lock mr-1 text-gray-500"></i>
+                                                <span class="mr-1 text-gray-500">🔒</span>
                                                 Nova Senha
                                             </label>
                                             <div class="relative">
@@ -251,7 +289,7 @@
                                                     placeholder="Digite a nova senha"
                                                     minlength="6">
                                                 <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600" onclick="togglePassword('password')">
-                                                    <i class="fas fa-eye" id="password_icon"></i>
+                                                    <span id="password_icon">👁️</span>
                                                 </button>
                                             </div>
                                             <p class="mt-1 text-xs text-gray-500">Mínimo 6 caracteres com letras e números</p>
@@ -263,7 +301,7 @@
                                         {{-- CONFIRMAR SENHA --}}
                                         <div>
                                             <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-                                                <i class="fas fa-lock mr-1 text-gray-500"></i>
+                                                <span class="mr-1 text-gray-500">🔒</span>
                                                 Confirmar Nova Senha
                                             </label>
                                             <div class="relative">
@@ -274,7 +312,7 @@
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('password_confirmation') border-red-500 @enderror"
                                                     placeholder="Confirme a nova senha">
                                                 <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600" onclick="togglePassword('password_confirmation')">
-                                                    <i class="fas fa-eye" id="password_confirmation_icon"></i>
+                                                    <span id="password_confirmation_icon">👁️</span>
                                                 </button>
                                             </div>
                                             @error('password_confirmation')
@@ -291,7 +329,7 @@
                                     type="submit" 
                                     class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
                                     id="submit-btn">
-                                    <i class="fas fa-save mr-2"></i>
+                                    <span class="mr-2">💾</span>
                                     Salvar Alterações
                                 </button>
                                 
@@ -300,13 +338,13 @@
                                         type="button" 
                                         onclick="resetForm()" 
                                         class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                                        <i class="fas fa-undo mr-1"></i>
+                                        <span class="mr-1">↩️</span>
                                         Resetar
                                     </button>
                                     
                                     <a href="{{ route('meus-agendamentos') }}" 
                                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-center">
-                                        <i class="fas fa-times mr-1"></i>
+                                        <span class="mr-1">❌</span>
                                         Cancelar
                                     </a>
                                 </div>
@@ -321,7 +359,7 @@
         <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
                 <h4 class="font-medium text-blue-800 mb-2">
-                    <i class="fas fa-user-shield mr-2"></i>
+                    <span class="mr-2">🛡️</span>
                     Privacidade
                 </h4>
                 <p class="text-blue-700 text-sm">
@@ -331,7 +369,7 @@
             
             <div class="bg-green-50 rounded-lg p-4 border border-green-200">
                 <h4 class="font-medium text-green-800 mb-2">
-                    <i class="fas fa-sync mr-2"></i>
+                    <span class="mr-2">🔄</span>
                     Sincronização
                 </h4>
                 <p class="text-green-700 text-sm">
@@ -341,7 +379,7 @@
             
             <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
                 <h4 class="font-medium text-orange-800 mb-2">
-                    <i class="fas fa-headset mr-2"></i>
+                    <span class="mr-2">🎧</span>
                     Suporte
                 </h4>
                 <p class="text-orange-700 text-sm">
@@ -382,11 +420,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form && submitBtn) {
         form.addEventListener('submit', function() {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+            submitBtn.innerHTML = '<span class="mr-2">⏳</span>Salvando...';
             
             setTimeout(() => {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Alterações';
+                submitBtn.innerHTML = '<span class="mr-2">💾</span>Salvar Alterações';
             }, 10000);
         });
     }
@@ -445,10 +483,10 @@ function togglePassword(fieldId) {
     
     if (field.type === 'password') {
         field.type = 'text';
-        icon.className = 'fas fa-eye-slash';
+        icon.textContent = '🙈';
     } else {
         field.type = 'password';
-        icon.className = 'fas fa-eye';
+        icon.textContent = '👁️';
     }
 }
 
