@@ -39,7 +39,8 @@ class AuthController extends Controller
 
             // Tentativa de login
             if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-                return redirect('/meus-agendamentos')->with('success', 'Login realizado!');
+                //return redirect('/meus-agendamentos')->with('success', 'Login realizado!');
+                return redirect()->route('dashboard')->with('success', 'Login realizado!');
             }
 
             return back()->with('error', 'Credenciais inválidas');

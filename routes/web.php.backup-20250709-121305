@@ -142,15 +142,8 @@ Route::middleware(['auth'])->prefix('painel')->name('painel.')->group(function (
     
     // ✅ AGENDAMENTOS: Acesso para ADMIN, SUPER_ADMIN E COLABORADOR
     Route::middleware(['check.role:super_admin,admin,colaborador'])->group(function () {
-        //Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
-        Route::get('/agendamentos', Agendamentos::class)->name('painel.agendamentos.index');
-       
-        /* Route::get('/agendamentos', function () {
-            return view('livewire-page', ['component' => App\Livewire\Painel\Agendamentos::class]);
-        })->name('agendamentos.index'); */
-       
+        Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
         Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
-       
         Route::get('/dashboard', DashboardAgendamentos::class)->name('dashboard');
     });
 });
@@ -272,21 +265,3 @@ Route::fallback(function () {
     
     return view('errors.404');
 });
-
-// Rota de debug - TEMPORÁRIA
-Route::get('/debug-agendamentos', function () {
-    try {
-        $component = new App\Livewire\Painel\Agendamentos();
-        $result = $component->render();
-        return "✅ Component funciona no contexto web! Hora: " . now();
-    } catch (Exception $e) {
-        return "❌ ERRO WEB: " . $e->getMessage() . "<br>Linha: " . $e->getLine() . "<br>Arquivo: " . $e->getFile();
-    }
-})->middleware(['auth', 'check.role:super_admin,admin,colaborador']);
-
-
-// ROTA TEMPORÁRIA PARA TESTE DO LIVEWIRE
-Route::get('/teste-livewire', \App\Livewire\Painel\Teste::class)
-    ->middleware(['auth', 'check.role:super_admin,admin,colaborador'])
-    ->name('teste.livewire');
-

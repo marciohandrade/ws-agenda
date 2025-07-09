@@ -97,7 +97,8 @@ class Agendamentos extends Component
         $clientes = Cliente::orderBy('nome')->get();
         $servicos = Servico::orderBy('nome')->get();
 
-        return view('livewire.painel.agendamentos', [
+        // TESTE: View simples temporária
+        return view('livewire.painel.agendamentos-teste', [
             'agendamentos' => $agendamentos,
             'clientes' => $clientes,
             'servicos' => $servicos
