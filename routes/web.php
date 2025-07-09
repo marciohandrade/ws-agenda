@@ -80,7 +80,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         case 'super_admin':
         case 'admin':
         case 'colaborador':
-            return redirect()->route('painel.agendamentos.index')
+            return redirect()->route('agendamentos.index')
                 ->with('success', 'Bem-vindo ao painel administrativo, ' . $user->name . '!');
             
         case 'usuario':
@@ -141,9 +141,8 @@ Route::middleware(['auth'])->prefix('painel')->name('painel.')->group(function (
     });
     
     // ✅ AGENDAMENTOS: Acesso para ADMIN, SUPER_ADMIN E COLABORADOR
-    Route::middleware(['check.role:super_admin,admin,colaborador'])->group(function () {
-        //Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
-        Route::get('/agendamentos', Agendamentos::class)->name('painel.agendamentos.index');
+    Route::middleware(['check.role:super_admin,admin,colaborador'])->group(function () {        
+        Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
        
         /* Route::get('/agendamentos', function () {
             return view('livewire-page', ['component' => App\Livewire\Painel\Agendamentos::class]);
@@ -289,4 +288,7 @@ Route::get('/debug-agendamentos', function () {
 Route::get('/teste-livewire', \App\Livewire\Painel\Teste::class)
     ->middleware(['auth', 'check.role:super_admin,admin,colaborador'])
     ->name('teste.livewire');
+
+
+require __DIR__.'/auth.php';
 
