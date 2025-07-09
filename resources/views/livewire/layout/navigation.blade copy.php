@@ -34,26 +34,26 @@ new class extends Component
                         {{ __('Dashboard') }}
                     </x-nav-link>
                                          -->
-                     <x-nav-link :href="route('painel.usuarios.index')" :active="request()->routeIs('painel.usuarios.*')" wire:navigate>
+                     <x-nav-link :href="route('usuarios.index')" :active="request()->routeIs('usuarios.index')" wire:navigate>
                         {{ __('Usuários') }}
                     </x-nav-link>
-                     <x-nav-link :href="route('painel.clientes.index')" :active="request()->routeIs('painel.clientes.*')">
+                     <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index')">
                         {{ __('Clientes') }}
                     </x-nav-link>
-
-                    <x-nav-link :href="route('painel.configuracoes-agendamento.index')" :active="request()->routeIs('painel.configuracoes-agendamento.*')" wire:navigate>
+                    
+                    <x-nav-link :href="route('configuracoes-agendamento.index')" :active="request()->routeIs('configuracoes-agendamento.index')" wire:navigate>
                         {{ __('Configurações') }}
                     </x-nav-link>
-
-                     <!-- NOVOS LINKS DO SISTEMA DE AGENDAMENTOS -->
-                    <x-nav-link :href="route('painel.servicos.index')" :active="request()->routeIs('painel.servicos.*')" wire:navigate>
+                    
+                     <!-- NOVOS LINKS DO SISTEMA DE AGENDAMENTOS -->                    
+                    <x-nav-link :href="route('servicos.index')" :active="request()->routeIs('servicos.index')" wire:navigate>
                         {{ __('Serviços') }}
                     </x-nav-link>
 
-                     <x-nav-link :href="route('painel.agendamentos.index')" :active="request()->routeIs('painel.agendamentos.*')" wire:navigate>
+                     <x-nav-link :href="route('agendamentos.index')" :active="request()->routeIs('agendamentos.index')" wire:navigate>
                         {{ __('Agendamentos') }}
-                    </x-nav-link>
-
+                    </x-nav-link>                   
+                    
                     <!-- FIM DOS NOVOS LINKS -->
                 </div>
             </div>
@@ -74,7 +74,7 @@ new class extends Component
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('perfil')" wire:navigate>
+                        <x-dropdown-link :href="route('profile')" wire:navigate>
                             {{ __('Perfil') }}
                         </x-dropdown-link>
 
@@ -102,25 +102,25 @@ new class extends Component
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-
-            <x-responsive-nav-link :href="route('painel.clientes.index')" :active="request()->routeIs('painel.clientes.*')">
+        <div class="pt-2 pb-3 space-y-1">           
+            
+            <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index')">
                 {{ __('Clientes') }}
             </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('painel.configuracoes-agendamento.index')" :active="request()->routeIs('painel.configuracoes-agendamento.*')" wire:navigate>
-                {{ __('Configurações') }}
-            </x-responsive-nav-link>
+            
+            <x-nav-link :href="route('configuracoes-agendamento.index')" :active="request()->routeIs('configuracoes-agendamento.index')" wire:navigate>
+                        {{ __('Configurações') }}
+                    </x-nav-link>
             <!-- NOVOS LINKS RESPONSIVOS DO SISTEMA DE AGENDAMENTOS -->
-            <x-responsive-nav-link :href="route('painel.servicos.index')" :active="request()->routeIs('painel.servicos.*')" wire:navigate>
+            <x-responsive-nav-link :href="route('servicos.index')" :active="request()->routeIs('servicos.index')" wire:navigate>
                 {{ __('Serviços') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('painel.agendamentos.index')" :active="request()->routeIs('painel.agendamentos.*')" wire:navigate>
+            </x-responsive-nav-link>            
+            <x-responsive-nav-link :href="route('agendamentos.index')" :active="request()->routeIs('agendamentos.index')" wire:navigate>
                 {{ __('Agendamentos') }}
             </x-responsive-nav-link>
             <!-- FIM DOS NOVOS LINKS RESPONSIVOS -->
-
-
+            
+            
         </div>
 
         <!-- Responsive Settings Options -->
@@ -131,7 +131,7 @@ new class extends Component
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('perfil')" wire:navigate>
+                <x-responsive-nav-link :href="route('profile')" wire:navigate>
                     {{ __('Perfil') }}
                 </x-responsive-nav-link>
 
