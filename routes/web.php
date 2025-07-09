@@ -80,7 +80,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         case 'super_admin':
         case 'admin':
         case 'colaborador':
-            return redirect()->route('agendamentos.index')
+            return redirect()->route('painel.agendamentos.index')
                 ->with('success', 'Bem-vindo ao painel administrativo, ' . $user->name . '!');
             
         case 'usuario':

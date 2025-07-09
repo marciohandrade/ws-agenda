@@ -90,7 +90,7 @@
 
             <!-- Voltar ao Painel -->
             <div class="mt-8 text-center">
-                <a href="{{ route('painel.agendamentos.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">
+                <a href="{{ route('agendamento.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">
                     ← Voltar ao Painel
                 </a>
             </div>

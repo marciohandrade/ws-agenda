@@ -33,7 +33,7 @@ class NovoAgendamento extends Component
 
         if (!$user->isUsuario()) {
             if ($user->canAccessAdmin()) {
-                return redirect()->route('painel.agendamentos.index');
+                return redirect()->route('agendamento.index');
             }
             abort(403, 'Acesso negado.');
         }

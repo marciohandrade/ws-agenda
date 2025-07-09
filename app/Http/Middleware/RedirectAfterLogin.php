@@ -23,7 +23,7 @@ class RedirectAfterLogin
             switch ($user->tipo_usuario) {
                 case 'admin':
                 case 'colaborador':
-                    return redirect()->route('painel.agendamentos.index');
+                    return redirect()->route('agendamentos.index');
                     
                 case 'usuario':
                     // Quando implementarmos a área do cliente

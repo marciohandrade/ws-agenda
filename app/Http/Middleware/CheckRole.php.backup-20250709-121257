@@ -60,7 +60,7 @@ class CheckRole
             case 'colaborador':
                 // ✅ Se é admin/colaborador mas não tem essa permissão específica
                 // Redirecionar para área administrativa padrão
-                return redirect()->route('painel.agendamentos.index')
+                return redirect()->route('agendamento.index')
                     ->with('warning', 'Você não tem permissão para essa área específica. Redirecionado para agendamentos.');
                 break; // ✅ CORREÇÃO: Adicionar break
 
@@ -107,7 +107,7 @@ class CheckRole
             case 'super_admin':
             case 'admin':
             case 'colaborador':
-                return 'painel.agendamentos.index';
+                return 'agendamento.index';
 
             case 'usuario':
                 return 'meus-agendamentos';

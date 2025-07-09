@@ -57,9 +57,7 @@ class CheckRole
         switch ($userType) {
             case 'super_admin':
             case 'admin':
-            case 'colaborador':
-                // ✅ Se é admin/colaborador mas não tem essa permissão específica
-                // Redirecionar para área administrativa padrão
+            case 'colaborador':                
                 return redirect()->route('painel.agendamentos.index')
                     ->with('warning', 'Você não tem permissão para essa área específica. Redirecionado para agendamentos.');
                 break; // ✅ CORREÇÃO: Adicionar break

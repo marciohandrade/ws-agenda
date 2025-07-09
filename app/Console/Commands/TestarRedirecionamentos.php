@@ -81,7 +81,7 @@ class TestarRedirecionamentos extends Command
             case 'admin':
             case 'colaborador':
                 return [
-                    'painel.agendamentos.index',
+                    'agendamento.index',
                     'painel.clientes.index',
                     'painel.servicos.index',
                     'painel.usuarios.index',
@@ -107,7 +107,7 @@ class TestarRedirecionamentos extends Command
         
         $routes = [
             '🔑 Área Administrativa (Painel)' => [
-                'painel.agendamentos.index' => '/painel/agendamentos',
+                'agendamento.index' => '/painel/agendamentos',
                 'painel.clientes.index' => '/painel/clientes',
                 'painel.servicos.index' => '/painel/servicos',
                 'painel.usuarios.index' => '/painel/usuarios',
