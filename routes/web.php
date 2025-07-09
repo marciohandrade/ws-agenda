@@ -115,7 +115,6 @@ Route::get('/login', function () {
 })->name('login');
 
 
-
 Route::post('/login', function (Illuminate\Http\Request $request) {
     try {
         return app(AuthController::class)->login($request);

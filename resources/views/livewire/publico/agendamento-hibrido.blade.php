@@ -573,9 +573,27 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
-                        <input type="tel" wire:model="telefone" 
-                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('telefone') border-red-500 @enderror"
-                               placeholder="(11) 99999-9999">
+                        <input type="tel" 
+                            wire:model="telefone"
+                            x-data="{ 
+                                formatPhone(value) {
+                                    // Remove tudo que não é número
+                                    let numbers = value.replace(/\D/g, '');
+                                    
+                                    // Formatação progressiva
+                                    if (numbers.length === 0) return '';
+                                    if (numbers.length === 1) return `(${numbers}`;
+                                    if (numbers.length === 2) return `(${numbers}) `;
+                                    if (numbers.length <= 6) return `(${numbers.slice(0,2)}) ${numbers.slice(2)}`;
+                                    if (numbers.length <= 10) return `(${numbers.slice(0,2)}) ${numbers.slice(2,6)}-${numbers.slice(6)}`;
+                                    // Para celular (11 dígitos)
+                                    return `(${numbers.slice(0,2)}) ${numbers.slice(2,7)}-${numbers.slice(7,11)}`;
+                                }
+                            }"
+                            x-on:input="$event.target.value = formatPhone($event.target.value)"
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('telefone') border-red-500 @enderror"
+                            placeholder="(11) 99999-9999"
+                            maxlength="15">
                         @error('telefone')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
