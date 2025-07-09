@@ -35,18 +35,17 @@
                     <a href="/#especialidades" class="menu-link px-3 py-2 rounded transition" data-section="especialidades">Especialidades</a>
                     <a href="/#equipe" class="menu-link px-3 py-2 rounded transition" data-section="equipe">Equipe</a>
                     
-                    {{-- 🔥 SISTEMA DE MENU BASEADO EM AUTENTICAÇÃO - DROPDOWN CORRIGIDO --}}
+                    {{-- ✅ SISTEMA DE MENU BASEADO EM AUTENTICAÇÃO --}}
                     @auth
-                        {{-- 🔥 DROPDOWN COM JAVASCRIPT --}}
-                        <div class="relative">
-                            <button id="user-dropdown-button" class="flex items-center px-3 py-2 rounded transition hover:bg-blue-50 text-blue-700 focus:outline-none">
+                        {{-- ✅ Para usuários logados - dropdown simples --}}
+                        <div class="relative group">
+                            <button class="flex items-center px-3 py-2 rounded transition hover:bg-blue-50 text-blue-700">
                                 <i class="fas fa-user-circle mr-2"></i>
                                 <span>{{ Auth::user()->name }}</span>
-                                <i class="fas fa-chevron-down ml-2 text-xs transition-transform" id="dropdown-arrow"></i>
+                                <i class="fas fa-chevron-down ml-2 text-xs"></i>
                             </button>
                             
-                            {{-- 🔥 DROPDOWN MENU - CONTROLADO POR JS --}}
-                            <div id="user-dropdown-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border transform opacity-0 scale-95 transition-all duration-200 pointer-events-none z-50">
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                 <div class="py-2">
                                     <a href="/perfil" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition">
                                         <i class="fas fa-user mr-3"></i>Meu Perfil
@@ -166,55 +165,6 @@
     
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // 🔥 LÓGICA DO DROPDOWN DE USUÁRIO
-        const dropdownButton = document.getElementById("user-dropdown-button");
-        const dropdownMenu = document.getElementById("user-dropdown-menu");
-        const dropdownArrow = document.getElementById("dropdown-arrow");
-        
-        if (dropdownButton && dropdownMenu) {
-            let isOpen = false;
-            
-            // Função para abrir dropdown
-            function openDropdown() {
-                isOpen = true;
-                dropdownMenu.classList.remove("opacity-0", "scale-95", "pointer-events-none");
-                dropdownMenu.classList.add("opacity-100", "scale-100");
-                dropdownArrow.style.transform = "rotate(180deg)";
-            }
-            
-            // Função para fechar dropdown
-            function closeDropdown() {
-                isOpen = false;
-                dropdownMenu.classList.remove("opacity-100", "scale-100");
-                dropdownMenu.classList.add("opacity-0", "scale-95", "pointer-events-none");
-                dropdownArrow.style.transform = "rotate(0deg)";
-            }
-            
-            // Toggle ao clicar no botão
-            dropdownButton.addEventListener("click", function(e) {
-                e.stopPropagation();
-                if (isOpen) {
-                    closeDropdown();
-                } else {
-                    openDropdown();
-                }
-            });
-            
-            // Fechar ao clicar fora
-            document.addEventListener("click", function(e) {
-                if (isOpen && !dropdownMenu.contains(e.target) && !dropdownButton.contains(e.target)) {
-                    closeDropdown();
-                }
-            });
-            
-            // Fechar ao pressionar ESC
-            document.addEventListener("keydown", function(e) {
-                if (e.key === "Escape" && isOpen) {
-                    closeDropdown();
-                }
-            });
-        }
-
         // Lógica do menu mobile
         const menuButton = document.getElementById("mobile-menu-button");
         const mobileMenu = document.getElementById("mobile-menu");
