@@ -119,7 +119,7 @@
 
         {{-- ✅ FALLBACK - LISTAGEM CORRIGIDA --}}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">📋 Listagem Direta:</h3>
+            <!-- <h3 class="text-lg font-medium text-gray-900 mb-4">📋 Listagem Direta:</h3> -->
             
             @php
                 // ✅ CONSULTA CORRIGIDA (campo duracao_minutos + sem @try/@catch)
@@ -205,12 +205,12 @@
         </div>
 
         {{-- 🎯 STATUS CORREÇÃO --}}
-        <div class="mt-6 text-center">
+        <!-- <div class="mt-6 text-center">
             <div class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                 <span class="mr-2">✅</span>
                 <span class="text-sm font-medium">Versão corrigida: sem @try/@catch + campo duracao_minutos!</span>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 @endsection

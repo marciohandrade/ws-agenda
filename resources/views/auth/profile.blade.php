@@ -215,10 +215,46 @@
                                             type="tel" 
                                             id="telefone" 
                                             name="telefone" 
-                                            value="{{ old('telefone', $user->telefone) }}"
+                                            value="{{ old('telefone', $user->telefone ?? '') }}"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('telefone') border-red-500 @enderror"
                                             placeholder="(11) 99999-9999"
+                                            maxlength="15"
                                             required>
+                                        @error('telefone')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+
+                                        <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const telefone = document.getElementById('telefone');
+                                            
+                                            if (telefone) {
+                                                // Aplicar máscara no valor inicial
+                                                if (telefone.value) {
+                                                    telefone.value = mascaraCelular(telefone.value);
+                                                }
+                                                
+                                                telefone.addEventListener('input', function(e) {
+                                                    e.target.value = mascaraCelular(e.target.value);
+                                                });
+                                            }
+                                            
+                                            function mascaraCelular(valor) {
+                                                // Remove tudo que não é número
+                                                valor = valor.replace(/\D/g, '');
+                                                
+                                                // Limita a 11 dígitos
+                                                valor = valor.substring(0, 11);
+                                                
+                                                // Aplica máscara: (XX) 9XXXX-XXXX
+                                                valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                                valor = valor.replace(/(\d{2})(\d{4})/, '($1) $2');
+                                                valor = valor.replace(/(\d{2})/, '($1');
+                                                
+                                                return valor;
+                                            }
+                                        });
+                                        </script>
                                         @error('telefone')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
