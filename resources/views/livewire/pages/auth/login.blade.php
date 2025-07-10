@@ -1,71 +1,162 @@
-<?php
+@extends('layouts.clinica')
 
-use App\Livewire\Forms\LoginForm;
-use Illuminate\Support\Facades\Session;
-use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+@section('title', 'Entrar - Clínica Vida Saudável')
 
-new #[Layout('layouts.guest')] class extends Component
-{
-    public LoginForm $form;
+@section('content')
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function login(): void
-    {
-        $this->validate();
+        {{-- 🎯 MENSAGENS DE FEEDBACK --}}
+        @if(session('info'))
+            <div class="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span>{{ session('info') }}</span>
+                </div>
+            </div>
+        @endif
 
-        $this->form->authenticate();
+        @if(session('success'))
+            <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+            </div>
+        @endif
 
-        Session::regenerate();
+        @if(session('error'))
+            <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+            </div>
+        @endif
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
-    }
-}; ?>
-
-<div>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form wire:submit="login">
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Entrar')" />
-            <x-text-input wire:model="form.email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
-        </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Senha')" />
-
-            <x-text-input wire:model="form.password" id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember" class="inline-flex items-center">
-                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Lembre-me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Esqueceu sua Senha?') }}
-                </a>
+        {{-- ✅ FORMULÁRIO DE LOGIN --}}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            @if($errors->any())
+                <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    <ul class="text-sm space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>• {{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
 
-           <x-primary-button class="ms-3 bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-800 focus:ring-blue-500">
-                {{ __('Entrar') }}
-            </x-primary-button>
+            @if(session('status'))
+                <div class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                @csrf
+
+                {{-- EMAIL --}}
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        <span class="text-blue-600 mr-2">📧</span>
+                        E-mail
+                    </label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           value="{{ old('email') }}" 
+                           required 
+                           autocomplete="email" 
+                           autofocus
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
+                           placeholder="seu@email.com">
+                    @error('email')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- SENHA --}}
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <span class="text-blue-600 mr-2">🔒</span>
+                        Senha
+                    </label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required 
+                           autocomplete="current-password"
+                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-500 @enderror"
+                           placeholder="Sua senha">
+                    @error('password')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- LEMBRAR-ME --}}
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                           id="remember" 
+                           name="remember" 
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                           {{ old('remember') ? 'checked' : '' }}>
+                    <label for="remember" class="ml-2 block text-sm text-gray-700">
+                        Lembrar-me
+                    </label>
+                </div>
+
+                {{-- BOTÃO LOGIN --}}
+                <div>
+                    <button type="submit" 
+                            class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                        <span class="mr-2">🚀</span>Entrar
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
+
+        {{-- ✅ LINKS ÚTEIS --}}
+        <div class="mt-6 space-y-4">
+            {{-- ESQUECI A SENHA --}}
+            @if (Route::has('password.request'))
+                <div class="text-center">
+                    <a href="{{ route('password.request') }}" 
+                       class="text-sm text-blue-600 hover:text-blue-800 underline">
+                        <span class="mr-1">🔑</span>Esqueci minha senha
+                    </a>
+                </div>
+            @endif
+
+            {{-- SEPARADOR --}}
+            <div class="flex items-center">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <div class="px-4 text-sm text-gray-500">ou</div>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            {{-- CRIAR CONTA --}}
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <p class="text-sm text-gray-600 mb-3">Ainda não tem uma conta?</p>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" 
+                       class="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                        <span class="mr-2">✨</span>Criar nova conta
+                    </a>
+                @else
+                    <a href="/agendar" 
+                       class="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                        <span class="mr-2">📅</span>Agendar sem cadastro
+                    </a>
+                @endif
+            </div>
+
+            {{-- VOLTAR --}}
+            <div class="text-center">
+                <a href="/" class="text-sm text-gray-600 hover:text-gray-800">
+                    <span class="mr-1">🏠</span>Voltar ao site
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
+@endsection

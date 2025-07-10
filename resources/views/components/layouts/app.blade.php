@@ -10,10 +10,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen flex flex-col">
     
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
+    <!-- <header class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -27,20 +27,20 @@
                 </nav>
             </div>
         </div>
-    </header>
+    </header> -->
 
     <!-- Main Content -->
-    <main class="py-8">
+    <main class="flex-1 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {{ $slot }}
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t mt-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Footer - LARGURA TOTAL -->
+    <!-- <footer class="w-full bg-white border-t mt-16">
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-8">
             <div class="text-center text-gray-600">
-                <p>&copy; {{ date('Y') }} Nome da Empresa. Todos os direitos reservados.</p>
+                <p>&copy; {{ date('Y') }} Nome da Empresa 1. Todos os direitos reservados.</p>
                 <p class="mt-2 text-sm">
                     Dúvidas? Entre em contato: 
                     <a href="tel:+5511999999999" class="text-blue-600 hover:text-blue-800">(11) 99999-9999</a> | 
@@ -48,6 +48,14 @@
                 </p>
             </div>
         </div>
+    </footer> -->
+    <footer class="bg-blue-800 text-white py-6 text-center">
+        <div class="mb-2">
+            <a href="#" class="mx-2 text-white hover:text-gray-200"><i class="fab fa-whatsapp fa-lg"></i></a>
+            <a href="#" class="mx-2 text-white hover:text-gray-200"><i class="fab fa-instagram fa-lg"></i></a>
+            <a href="#" class="mx-2 text-white hover:text-gray-200"><i class="fab fa-facebook fa-lg"></i></a>
+        </div>
+        <p class="text-sm">&copy; 2025 Clínica Vida Saudável. Todos os direitos reservados.</p>
     </footer>
 
     @livewireScripts

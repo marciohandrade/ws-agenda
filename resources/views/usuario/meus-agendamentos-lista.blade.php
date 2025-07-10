@@ -102,7 +102,7 @@
         </div>
 
         {{-- 🧪 TESTE DO COMPONENTE LIVEWIRE CORRIGIDO --}}
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <!-- <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">🧪 Componente Livewire:</h3>
             
             @if($componentExists && $viewExists)
@@ -115,7 +115,7 @@
                     <p class="text-orange-600 text-xs mt-2">Usando fallback da listagem direta abaixo.</p>
                 </div>
             @endif
-        </div>
+        </div> -->
 
         {{-- ✅ FALLBACK - LISTAGEM CORRIGIDA --}}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
