@@ -17,7 +17,7 @@
         </div>
 
         {{-- 🔍 DIAGNÓSTICO CORRIGIDO (SEM @try/@catch) --}}
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <!-- <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <h3 class="font-medium text-green-800 mb-2">✅ Diagnóstico (Corrigido):</h3>
             <div class="text-sm text-green-700 space-y-1">
                 @php
@@ -34,7 +34,7 @@
                 <p>✅ Livewire component existe: {{ $componentExists ? 'SIM' : 'NÃO' }}</p>
                 <p>✅ View do component existe: {{ $viewExists ? 'SIM' : 'NÃO' }}</p>
             </div>
-        </div>
+        </div> -->
 
         {{-- ✅ ESTATÍSTICAS CORRIGIDAS (SEM @try/@catch) --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -102,7 +102,7 @@
         </div>
 
         {{-- 🧪 TESTE DO COMPONENTE LIVEWIRE CORRIGIDO --}}
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <!-- <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">🧪 Componente Livewire:</h3>
             
             @if($componentExists && $viewExists)
@@ -115,7 +115,7 @@
                     <p class="text-orange-600 text-xs mt-2">Usando fallback da listagem direta abaixo.</p>
                 </div>
             @endif
-        </div>
+        </div> -->
 
         {{-- ✅ FALLBACK - LISTAGEM CORRIGIDA --}}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -162,6 +162,18 @@
                                         <p class="text-xs text-gray-500 mt-1">
                                             <span class="mr-1">💬</span>{{ $agendamento->observacoes }}
                                         </p>
+                                    @endif
+                                    @if(in_array($agendamento->status, ['pendente', 'confirmado']))
+                                        <div class="mt-3 pt-2 border-t border-gray-100">
+                                            <form method="POST" action="{{ route('agendamento.cancelar', $agendamento->id) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" 
+                                                        onclick="return confirm('Cancelar este agendamento?')"
+                                                        class="text-xs text-red-600 hover:text-red-800 transition-colors">
+                                                    ❌ Cancelar
+                                                </button>
+                                            </form>
+                                        </div>
                                     @endif
                                 </div>
                                 <div class="text-right">

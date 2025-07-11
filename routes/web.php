@@ -173,6 +173,76 @@ Route::get('/meus-agendamentos', function () {
     }
 })->name('meus-agendamentos');
 
+Route::post('/agendamento/cancelar/{id}', function($id) {
+    if (!auth()->check()) {
+        return redirect('/login');
+    }
+    
+    try {
+        // Buscar o agendamento
+        $agendamento = \DB::table('agendamentos')
+            ->where('id', $id)
+            ->where('user_id', auth()->id())
+            ->first();
+        
+        if (!$agendamento) {
+            return back()->with('error', 'Agendamento não encontrado.');
+        }
+        
+        // Verificar se pode cancelar
+        $dataAgendamento = \Carbon\Carbon::parse($agendamento->data_agendamento);
+        $podeCarcelar = in_array($agendamento->status, ['pendente', 'confirmado']) && 
+                       $dataAgendamento->isFuture();
+        
+        if (!$podeCarcelar) {
+            return back()->with('error', 'Este agendamento não pode ser cancelado.');
+        }
+        
+        // Cancelar
+        \DB::table('agendamentos')
+            ->where('id', $id)
+            ->update([
+                'status' => 'cancelado',
+                'updated_at' => now()
+            ]);
+        
+        return back()->with('success', 'Agendamento cancelado com sucesso!');
+        
+    } catch (\Exception $e) {
+        return back()->with('error', 'Erro ao cancelar agendamento.');
+    }
+})->name('agendamento.cancelar');
+
+// Detalhes do agendamento
+Route::get('/agendamento/detalhes/{id}', function($id) {
+    if (!auth()->check()) {
+        return redirect('/login');
+    }
+    
+    try {
+        $agendamento = \DB::table('agendamentos as a')
+            ->leftJoin('servicos as s', 'a.servico_id', '=', 's.id')
+            ->where('a.id', $id)
+            ->where('a.user_id', auth()->id())
+            ->select([
+                'a.*',
+                's.nome as servico_nome',
+                's.preco as servico_preco',
+                's.duracao_minutos as servico_duracao'
+            ])
+            ->first();
+            
+        if (!$agendamento) {
+            return back()->with('error', 'Agendamento não encontrado.');
+        }
+        
+        return response()->json($agendamento);
+        
+    } catch (\Exception $e) {
+        return back()->with('error', 'Erro ao buscar detalhes.');
+    }
+})->name('agendamento.detalhes');
+
 /*
 |--------------------------------------------------------------------------
 | ✅ DASHBOARD
