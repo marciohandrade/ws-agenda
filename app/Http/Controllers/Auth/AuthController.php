@@ -97,6 +97,7 @@ class AuthController extends Controller
             }
 
             $user = Auth::user();
+            $telefone = str_replace(['(', ')', ' ', '-'], '', $request->telefone);
             
             // Atualização básica sem validação complexa
             if ($request->name) {
@@ -106,7 +107,7 @@ class AuthController extends Controller
                 $user->email = $request->email;
             }
             if ($request->telefone) {
-                $user->telefone = $request->telefone;
+                $user->telefone = str_replace(['(', ')', ' ', '-'], '', $request->telefone);
             }
             
             $user->save();

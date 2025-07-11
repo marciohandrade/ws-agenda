@@ -203,8 +203,7 @@
                                         @error('name')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
-                                    </div>
-
+                                    </div>                              
                                     {{-- TELEFONE --}}
                                     <div>
                                         <label for="telefone" class="block text-sm font-medium text-gray-700 mb-2">
@@ -218,12 +217,12 @@
                                             value="{{ old('telefone', $user->telefone) }}"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('telefone') border-red-500 @enderror"
                                             placeholder="(11) 99999-9999"
+                                            maxlength="15"
                                             required>
                                         @error('telefone')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
-                                </div>
 
                                 {{-- EMAIL --}}
                                 <div class="mt-4">
@@ -541,5 +540,60 @@ function resetForm() {
         });
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const telefoneInput = document.getElementById('telefone');
+    
+    if (telefoneInput) {
+        // Aplicar máscara no valor inicial (se houver)
+        if (telefoneInput.value) {
+            telefoneInput.value = aplicarMascaraTelefone(telefoneInput.value);
+        }
+        
+        // Aplicar máscara conforme digita
+        telefoneInput.addEventListener('input', function(e) {
+            e.target.value = aplicarMascaraTelefone(e.target.value);
+        });
+        
+        // Permitir apenas teclas válidas
+        telefoneInput.addEventListener('keypress', function(e) {
+            // Permite: números, backspace, delete, tab, enter, setas
+            const allowedKeys = [8, 9, 13, 46, 37, 38, 39, 40];
+            const isNumber = (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105);
+            
+            if (!isNumber && !allowedKeys.includes(e.keyCode)) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    function aplicarMascaraTelefone(value) {
+        // Remove tudo que não é número
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara progressivamente
+        if (value.length >= 11) {
+            // Celular: (XX) 9XXXX-XXXX
+            return value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (value.length >= 10) {
+            // Fixo: (XX) XXXX-XXXX
+            return value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+        } else if (value.length >= 6) {
+            // Parcial: (XX) XXXX
+            return value.replace(/(\d{2})(\d{4})/, '($1) $2');
+        } else if (value.length >= 2) {
+            // Só DDD: (XX
+            return value.replace(/(\d{2})/, '($1) ');
+        } else if (value.length >= 1) {
+            // Começando: (X
+            return value.replace(/(\d{1})/, '($1');
+        }
+        
+        return value;
+    }
+});
 </script>
 @endsection
