@@ -37,15 +37,15 @@
                     
                     {{-- ✅ SISTEMA DE MENU BASEADO EM AUTENTICAÇÃO --}}
                     @auth
-                        {{-- ✅ Para usuários logados - dropdown simples --}}
-                        <div class="relative group">
-                            <button class="flex items-center px-3 py-2 rounded transition hover:bg-blue-50 text-blue-700">
+                        {{-- 🔥 DROPDOWN DESKTOP CORRIGIDO --}}
+                        <div class="relative">
+                            <button id="user-dropdown-button-desktop" class="flex items-center px-3 py-2 rounded transition hover:bg-blue-50 text-blue-700 focus:outline-none">
                                 <i class="fas fa-user-circle mr-2"></i>
                                 <span>{{ Auth::user()->name }}</span>
-                                <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                                <i class="fas fa-chevron-down ml-2 text-xs transition-transform" id="dropdown-arrow-desktop"></i>
                             </button>
                             
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div id="user-dropdown-menu-desktop" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border transform opacity-0 scale-95 transition-all duration-200 pointer-events-none z-50">
                                 <div class="py-2">
                                     <a href="/perfil" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition">
                                         <i class="fas fa-user mr-3"></i>Meu Perfil
@@ -68,18 +68,18 @@
                             </div>
                         </div>
                     @else
-                        {{-- ✅ Para usuários não logados - links simples --}}
-                        <a href="/login" class="menu-link px-3 py-2 rounded transition hover:bg-gray-100">
-                            <i class="fas fa-sign-in-alt mr-1"></i>Entrar
-                        </a>
-                        
                         <!-- Botão Agendar - sempre destacado -->
                         <a href="/agendar" class="menu-link px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-medium {{ request()->is('agendar*') ? 'bg-blue-800' : '' }}">
                             <i class="fas fa-calendar-plus mr-2"></i>Agendar Online
                         </a>
+                        
+                        <a href="/#contato" class="menu-link px-3 py-2 rounded transition" data-section="contato">Contato</a>
+
+                        {{-- ✅ Para usuários não logados - links simples --}}
+                        <a href="/login" class="menu-link px-3 py-2 rounded transition hover:bg-gray-100">
+                            <i class="fas fa-sign-in-alt mr-1"></i>Entrar
+                        </a>
                     @endauth
-                    
-                    <a href="/#contato" class="menu-link px-3 py-2 rounded transition" data-section="contato">Contato</a>
                 </div>
                 </div>
             </div>
@@ -165,14 +165,60 @@
     
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Lógica do menu mobile
+        // 🔥 FUNÇÃO PARA CONTROLAR DROPDOWN (REUTILIZÁVEL)
+        function setupDropdown(buttonId, menuId, arrowId = null) {
+            const button = document.getElementById(buttonId);
+            const menu = document.getElementById(menuId);
+            const arrow = arrowId ? document.getElementById(arrowId) : null;
+            
+            if (!button || !menu) return;
+            
+            let isOpen = false;
+            
+            function openDropdown() {
+                isOpen = true;
+                menu.classList.remove("opacity-0", "scale-95", "pointer-events-none");
+                menu.classList.add("opacity-100", "scale-100");
+                if (arrow) arrow.style.transform = "rotate(180deg)";
+            }
+            
+            function closeDropdown() {
+                isOpen = false;
+                menu.classList.remove("opacity-100", "scale-100");
+                menu.classList.add("opacity-0", "scale-95", "pointer-events-none");
+                if (arrow) arrow.style.transform = "rotate(0deg)";
+            }
+            
+            // Toggle ao clicar no botão
+            button.addEventListener("click", function(e) {
+                e.stopPropagation();
+                isOpen ? closeDropdown() : openDropdown();
+            });
+            
+            // Fechar ao clicar fora
+            document.addEventListener("click", function(e) {
+                if (isOpen && !menu.contains(e.target) && !button.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+            
+            // Fechar ao pressionar ESC
+            document.addEventListener("keydown", function(e) {
+                if (e.key === "Escape" && isOpen) closeDropdown();
+            });
+        }
+        
+        // 🔥 APLICAR DROPDOWNS
+        setupDropdown("user-dropdown-button-desktop", "user-dropdown-menu-desktop", "dropdown-arrow-desktop");
+        setupDropdown("user-dropdown-button", "user-dropdown-menu", "dropdown-arrow");
+        
+        // 🔥 MENU MOBILE TOGGLE
         const menuButton = document.getElementById("mobile-menu-button");
         const mobileMenu = document.getElementById("mobile-menu");
-
         if (menuButton && mobileMenu) {
-        menuButton.addEventListener("click", () => {
-            mobileMenu.classList.toggle("hidden");
-        });
+            menuButton.addEventListener("click", () => {
+                mobileMenu.classList.toggle("hidden");
+            });
         }
 
         // ✅ MENU ATIVO - VERSÃO FINAL CORRIGIDA
