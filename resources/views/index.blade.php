@@ -1,6 +1,6 @@
 @extends('layouts.clinica')
 
-@section('title', 'Clínica Vida Saudável')
+@section('title', 'WS Clínica Saudável')
 
 @section('content')
     <!-- ✅ SÓ O CONTEÚDO FICA AQUI (SEM MENU/FOOTER) -->
@@ -36,7 +36,7 @@
             <div>
                 <h3 class="text-2xl font-semibold text-blue-800 mb-4">Sobre a Clínica</h3>
                 <p class="text-gray-700 leading-relaxed mb-4">
-                    Nossa missão é promover saúde com qualidade, acolhimento e profissionalismo. A Clínica Vida Saudável foi idealizada para oferecer um atendimento completo e humanizado, com foco no bem-estar físico, emocional e social de cada paciente.
+                    Nossa missão é promover saúde com qualidade, acolhimento e profissionalismo. A WS Clínica Saudável foi idealizada para oferecer um atendimento completo e humanizado, com foco no bem-estar físico, emocional e social de cada paciente.
                 </p>
                 <p class="text-gray-700 leading-relaxed mb-4">
                     Contamos com uma equipe multidisciplinar altamente capacitada, estrutura moderna, ambiente acolhedor e equipamentos de última geração para garantir diagnósticos precisos e tratamentos eficazes.

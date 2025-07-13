@@ -1,6 +1,6 @@
 @extends('layouts.clinica')
 
-@section('title', 'Agendamento Online - Clínica Vida Saudável')
+@section('title', 'Agendamento Online - WS Clínica Saudável')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/agendamento-publico.css') }}">

@@ -1,6 +1,6 @@
 @extends('layouts.clinica')
 
-@section('title', 'Meus Agendamentos - Clínica Vida Saudável')
+@section('title', 'Meus Agendamentos - WS Clínica Saudável')
 
 @section('content')
 <div class="min-h-screen bg-gray-50 py-8">

@@ -1,6 +1,6 @@
 @extends('layouts.clinica')
 
-@section('title', 'Agendar Consulta - Clínica Vida Saudável')
+@section('title', 'Agendar Consulta - WS Clínica Saudável')
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-white py-8">

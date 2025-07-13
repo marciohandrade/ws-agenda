@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Clínica Vida Saudável')</title>
+    <title>@yield('title', 'WS Clínica Saudável')</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @livewireStyles
@@ -17,7 +17,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/" class="text-xl font-bold text-blue-800">Clínica Vida</a>
+                    <a href="/" class="text-xl font-bold text-blue-800">WS Clínica</a>
                 </div>
                 <div class="-mr-2 flex items-center sm:hidden">
                     <!-- Botão do menu mobile -->
@@ -149,7 +149,7 @@
             <a href="#" class="mx-2 text-white hover:text-gray-200"><i class="fab fa-instagram fa-lg"></i></a>
             <a href="#" class="mx-2 text-white hover:text-gray-200"><i class="fab fa-facebook fa-lg"></i></a>
         </div>
-        <p class="text-sm">&copy; 2025 Clínica Vida Saudável. Todos os direitos reservados.</p>
+        <p class="text-sm">&copy; 2025 WS Clínica Saudável. Todos os direitos reservados.</p>
     </footer>
     
     <!-- ✅ BOTÃO WHATSAPP FICA AQUI -->
