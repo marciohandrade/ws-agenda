@@ -2,11 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Livewire\Painel\Agendamentos;
-use App\Livewire\Painel\ClienteCrud;
-use App\Livewire\Painel\Servicos;
-use App\Livewire\Painel\ConfiguracoesAgendamento;
-use App\Livewire\Painel\GerenciadorUsuarios;
 
 /*
 |--------------------------------------------------------------------------
@@ -263,11 +258,9 @@ Route::get('/dashboard', function () {
     
     switch ($user->tipo_usuario) {
         case 'super_admin':
-            return redirect('/painel/usuarios'); // ✅ SUPER ADMIN → USUÁRIOS
-            
         case 'admin':
         case 'colaborador':
-            return redirect('/painel/agendamentos'); // ✅ ADMIN/COLABORADOR → AGENDAMENTOS
+            return redirect('/painel/agendamentos');
             
         case 'usuario':
             return redirect('/meus-agendamentos');
@@ -276,25 +269,6 @@ Route::get('/dashboard', function () {
             return redirect('/login');
     }
 })->name('dashboard');
-
-/*
-|--------------------------------------------------------------------------
-| ✅ PAINEL ADMINISTRATIVO
-|--------------------------------------------------------------------------
-*/
-
-// Painel - Rotas administrativas
-Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
-    Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
-    Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
-    Route::get('/servicos', Servicos::class)->name('servicos.index');
-    Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
-    
-    // Rota de usuários - apenas para admin e super_admin
-    Route::middleware(['check.role:super_admin,admin'])->group(function () {
-        Route::get('/usuarios', GerenciadorUsuarios::class)->name('usuarios.index');
-    });
-});
 
 /*
 |--------------------------------------------------------------------------

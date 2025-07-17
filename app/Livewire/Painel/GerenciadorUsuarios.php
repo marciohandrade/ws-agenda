@@ -306,6 +306,6 @@ class GerenciadorUsuarios extends Component
         return view('livewire.painel.gerenciador-usuarios', [
             'usuarios' => $this->usuarios,
             'estatisticas' => $this->estatisticas
-        ])->layout('layouts.app');
+        ])->layout('layouts.painel');
     }
 }

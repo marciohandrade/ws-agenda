@@ -31,7 +31,7 @@ class CheckRole
             'url' => $request->url()
         ]);
 
-        // Super admin tem acesso a tudo
+        // ✅ CORRIGIDO: Super admin tem acesso a tudo (sem redirect forçado)
         if ($user->tipo_usuario === 'super_admin') {
             return $next($request);
         }
@@ -59,11 +59,20 @@ class CheckRole
 
         switch ($userType) {
             case 'super_admin':
+                // ✅ Super admin vai para gestão de usuários
+                if (!$request->routeIs('usuarios.index') && !$request->is('painel/*')) {
+                    return redirect()->route('usuarios.index')
+                        ->with('info', 'Você foi redirecionado para o painel administrativo.');
+                }
+                
+                // Se já está no painel mas não tem permissão específica
+                abort(403, 'Acesso negado. Você não tem permissão para acessar esta área específica.');
+                
             case 'admin':
             case 'colaborador':
-                // ✅ CORREÇÃO: Rota correta do painel administrativo
-                if (!$request->routeIs('painel.*')) {
-                    return redirect()->route('painel.agendamentos.index')
+                // ✅ Admin/Colaborador vão para agendamentos
+                if (!$request->is('painel/*')) {
+                    return redirect()->route('agendamentos.index')
                         ->with('info', 'Você foi redirecionado para o painel administrativo.');
                 }
                 
@@ -71,9 +80,9 @@ class CheckRole
                 abort(403, 'Acesso negado. Você não tem permissão para acessar esta área específica.');
                 
             case 'usuario':
-                // ✅ CORREÇÃO: Redirecionar para área do cliente
-                if ($request->routeIs('painel.*')) {
-                    return redirect()->route('usuario.meus-agendamentos')
+                // ✅ Usuário vai para seus agendamentos
+                if ($request->is('painel/*')) {
+                    return redirect()->route('meus-agendamentos')
                         ->with('info', 'Você foi redirecionado para sua área de cliente.');
                 }
                 
@@ -93,26 +102,23 @@ class CheckRole
     }
 
     /**
-     * ✅ NOVA FUNÇÃO: Verificar se o usuário pode acessar uma rota específica
+     * ✅ FUNÇÃO CORRIGIDA: Verificar se o usuário pode acessar uma rota específica
      */
     private function canAccessRoute(string $userType, string $routeName): bool
     {
-        // Rotas administrativas
+        // ✅ ROTAS ADMINISTRATIVAS - Names corretos
         $adminRoutes = [
-            'painel.agendamentos.index',
-            'painel.clientes.index',
-            'painel.servicos.index',
-            'painel.configuracoes-agendamento.index',
-            'painel.usuarios.index',
-            'painel.usuarios.criar',
-            'painel.meus-agendamentos'
+            'agendamentos.index',
+            'clientes.index', 
+            'servicos.index',
+            'configuracoes-agendamento.index',
+            'usuarios.index'
         ];
 
-        // Rotas de cliente
+        // ✅ ROTAS DE CLIENTE - Names corretos
         $clientRoutes = [
-            'usuario.meus-agendamentos',
-            'usuario.agendar',
-            'usuario.perfil'
+            'meus-agendamentos',
+            'perfil'
         ];
 
         // Verificar permissões
@@ -134,18 +140,20 @@ class CheckRole
     }
 
     /**
-     * ✅ NOVA FUNÇÃO: Obter rota padrão para o tipo de usuário
+     * ✅ FUNÇÃO CORRIGIDA: Obter rota padrão para o tipo de usuário
      */
     private function getDefaultRouteForUser(string $userType): string
     {
         switch ($userType) {
             case 'super_admin':
+                return 'usuarios.index'; // ✅ Super admin → Usuários
+                
             case 'admin':
             case 'colaborador':
-                return 'painel.agendamentos.index';
+                return 'agendamentos.index'; // ✅ Admin/Colaborador → Agendamentos
                 
             case 'usuario':
-                return 'usuario.meus-agendamentos';
+                return 'meus-agendamentos'; // ✅ Cliente → Seus agendamentos
                 
             default:
                 return 'login';

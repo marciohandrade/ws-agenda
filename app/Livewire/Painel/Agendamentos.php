@@ -101,7 +101,8 @@ class Agendamentos extends Component
             'agendamentos' => $agendamentos,
             'clientes' => $clientes,
             'servicos' => $servicos
-        ])->layout('layouts.app');
+            ])->layout('layouts.painel');
+        //])->layout('layouts.app');
     }
 
     public function salvar()

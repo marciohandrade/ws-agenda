@@ -51,7 +51,7 @@ class ConfiguracoesAgendamento extends Component
     public function render()
     {
         return view('livewire.painel.configuracoes-agendamento')
-            ->layout('layouts.app');
+            ->layout('layouts.painel');
     }
 
     /**

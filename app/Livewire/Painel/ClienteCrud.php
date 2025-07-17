@@ -116,8 +116,7 @@ class ClienteCrud extends Component
 
         return view('livewire.painel.cliente-crud', [
             'clientes' => $clientes,
-        ])->layout('layouts.app'); // ✅ Corrige o erro do layout
-
+            ])->layout('layouts.painel');
     }
 
         

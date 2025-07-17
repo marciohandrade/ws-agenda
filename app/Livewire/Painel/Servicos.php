@@ -55,7 +55,7 @@ class Servicos extends Component
             ->paginate(10);
 
         return view('livewire.painel.servicos', compact('servicos'))
-            ->layout('layouts.app');
+            ->layout('layouts.painel');
     }
 
     public function abrirModal()
