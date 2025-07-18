@@ -99,8 +99,9 @@
             <div class="flex-1 min-w-[150px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
                 <input type="text" 
-                    value="{{ $preco }}"
+                    value="{{ $preco }}" 
                     wire:change="$set('preco', $event.target.value)"
+                    wire:key="campo-preco-{{ $editando ? $servicoId : 'novo' }}"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                     placeholder="Ex: 150,00" 
                     maxlength="12">
@@ -146,7 +147,7 @@
 
     </form>
         <!-- BOTÃO DE TESTE TEMPORÁRIO -->
-        <!-- <div class="bg-red-100 p-4 mt-4 border border-red-300 rounded">
+        <div class="bg-red-100 p-4 mt-4 border border-red-300 rounded">
             <h4 class="font-bold mb-2">🔍 DEBUG - REMOVER DEPOIS</h4>
             <p><strong>Nome atual:</strong> "{{ $nome }}"</p>
             <p><strong>Preço atual:</strong> "{{ $preco }}"</p>
@@ -161,7 +162,7 @@
             <button wire:click="$set('nome', 'TESTE MANUAL')" class="bg-green-500 text-white px-4 py-2 rounded mt-2 ml-2">
                 🧪 TESTE: Definir nome manualmente
             </button>
-        </div> -->
+        </div>
 
     <!-- Filtro de Pesquisa - PADRONIZADO -->
     <div class="w-full space-y-6 mt-8 mb-8 p-6 bg-gray-50 rounded-lg">

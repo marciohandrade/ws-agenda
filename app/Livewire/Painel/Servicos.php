@@ -96,16 +96,21 @@ class Servicos extends Component
         if ($this->editando) {
             $servico = Servico::find($this->servicoId);
             $servico->update($dados);
-            session()->flash('sucesso', 'Serviço atualizado com sucesso!');
+             $mensagem = 'Serviço atualizado com sucesso!';
             
             // ✅ LIMPA OS CAMPOS APÓS ATUALIZAR
             $this->resetarFormulario();
         } else {
             Servico::create($dados);
-            session()->flash('sucesso', 'Serviço cadastrado com sucesso!');
+            $mensagem = 'Serviço cadastrado com sucesso!';
+            
+            $this->editando = true; // para tentar ver se limpa os campos
+
+            $this->dispatch('$refresh');
             
             // ✅ LIMPA OS CAMPOS APÓS CRIAR
             $this->resetarFormulario();
+            session()->flash('sucesso', $mensagem);
         }
     }
 
