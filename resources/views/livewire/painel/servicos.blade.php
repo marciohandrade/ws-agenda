@@ -50,81 +50,118 @@
     @endif
     
     <form wire:submit.prevent="salvar" class="w-full space-y-6">
-    
-        <!-- Linha 1: Nome do Serviço (linha única) -->
+
+        <!-- ✅ INDICADOR DE EDIÇÃO -->
+        @if($editando)
+            <div class="bg-yellow-100 border-l-4 border-yellow-400 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            <strong>✏️ Editando:</strong> {{ $nome }}
+                            <button wire:click="resetarFormulario" class="underline ml-4 hover:text-yellow-900">❌ Cancelar</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- ✅ NOME DO SERVIÇO -->
         <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Serviço</label>
-            <input type="text" wire:model="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Consulta, Retorno, Exame...">
+            <input type="text" 
+                value="{{ $nome }}" 
+                wire:change="$set('nome', $event.target.value)"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Ex: Consulta, Retorno, Exame...">
             @error('nome') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
-        <!-- Linha 2: Duração, Preço e Status -->
+        <!-- ✅ DURAÇÃO, PREÇO E STATUS -->
         <div class="flex flex-wrap gap-4">
+            <!-- DURAÇÃO -->
             <div class="flex-1 min-w-[150px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Duração (minutos)</label>
-                <input type="number" wire:model="duracao_minutos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                       min="15" max="480" step="15" placeholder="60">
+                <input type="number" 
+                    value="{{ $duracao_minutos }}"
+                    wire:change="$set('duracao_minutos', $event.target.value)"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    min="15" max="480" step="15" placeholder="60">
                 @error('duracao_minutos') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 <small class="text-gray-500 text-xs">Mín: 15 min, Máx: 8h</small>
             </div>
 
+            <!-- PREÇO -->
             <div class="flex-1 min-w-[150px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
-                <input type="text" wire:model="preco" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                       placeholder="0,00" maxlength="12"
-                       x-data="{ 
-                           formatMoney(event) {
-                               let value = event.target.value.replace(/\D/g, '');
-                               if (value === '') {
-                                   event.target.value = '';
-                                   return;
-                               }
-                               value = (value / 100).toFixed(2) + '';
-                               value = value.replace('.', ',');
-                               value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-                               event.target.value = 'R$ ' + value;
-                               $wire.set('preco', value.replace('R$ ', ''));
-                           }
-                       }"
-                       x-on:input="formatMoney($event)"
-                       x-on:keypress="if(!/[0-9]/.test($event.key) && $event.key !== 'Backspace' && $event.key !== 'Delete' && $event.key !== 'Tab') $event.preventDefault()">
+                <input type="text" 
+                    value="{{ $preco }}"
+                    wire:change="$set('preco', $event.target.value)"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Ex: 150,00" 
+                    maxlength="12">
                 @error('preco') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                <small class="text-gray-500 text-xs">Opcional - Ex: R$ 150,00</small>
+                <small class="text-gray-500 text-xs">Formato: 150,00 ou 1.500,50</small>
             </div>
 
+            <!-- STATUS -->
             <div class="flex-1 min-w-[120px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select wire:model="ativo" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="1">Ativo</option>
-                    <option value="0">Inativo</option>
+                <select wire:change="$set('ativo', $event.target.value)"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="1" {{ $ativo == 1 ? 'selected' : '' }}>Ativo</option>
+                    <option value="0" {{ $ativo == 0 ? 'selected' : '' }}>Inativo</option>
                 </select>
                 @error('ativo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
 
-        <!-- Linha 4: Descrição -->
+        <!-- ✅ DESCRIÇÃO -->
         <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-            <textarea wire:model="descricao" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" 
-                      placeholder="Descreva brevemente o serviço oferecido..."></textarea>
+            <textarea wire:change="$set('descricao', $event.target.value)"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    rows="3" 
+                    placeholder="Descreva brevemente o serviço oferecido...">{{ $descricao }}</textarea>
             @error('descricao') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
-        <!-- Linha Final: Botões Centralizados -->
+        <!-- ✅ BOTÕES -->
         <div class="w-full flex justify-center mt-6">
             @if ($editando)
                 <button type="button" wire:click="resetarFormulario"
                         class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mr-4">
-                    Cancelar
+                    ❌ Cancelar Edição
                 </button>
             @endif
 
             <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-900">
-                {{ $editando ? 'Atualizar' : 'Cadastrar' }}
+                {{ $editando ? '✅ Atualizar Serviço' : '➕ Cadastrar Serviço' }}
             </button>
         </div>
 
     </form>
+        <!-- BOTÃO DE TESTE TEMPORÁRIO -->
+        <!-- <div class="bg-red-100 p-4 mt-4 border border-red-300 rounded">
+            <h4 class="font-bold mb-2">🔍 DEBUG - REMOVER DEPOIS</h4>
+            <p><strong>Nome atual:</strong> "{{ $nome }}"</p>
+            <p><strong>Preço atual:</strong> "{{ $preco }}"</p>
+            <p><strong>Duração atual:</strong> "{{ $duracao_minutos }}"</p>
+            <p><strong>Editando:</strong> {{ $editando ? 'SIM' : 'NÃO' }}</p>
+            <p><strong>Serviço ID:</strong> {{ $servicoId ?? 'NULL' }}</p>
+            
+            <button wire:click="editar(16)" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">
+                🧪 TESTE: Editar ID 16
+            </button>
+            
+            <button wire:click="$set('nome', 'TESTE MANUAL')" class="bg-green-500 text-white px-4 py-2 rounded mt-2 ml-2">
+                🧪 TESTE: Definir nome manualmente
+            </button>
+        </div> -->
 
     <!-- Filtro de Pesquisa - PADRONIZADO -->
     <div class="w-full space-y-6 mt-8 mb-8 p-6 bg-gray-50 rounded-lg">
