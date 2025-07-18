@@ -257,3 +257,12 @@
     </div>
 
 </div> <!-- FECHA A DIV PRINCIPAL -->
+<script>
+document.addEventListener('livewire:init', () => {
+    Livewire.on('servico-salvo', () => {
+        setTimeout(() => {
+            location.reload();
+        }, 500);
+    });
+});
+</script>

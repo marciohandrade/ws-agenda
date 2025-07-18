@@ -74,13 +74,10 @@ class Servicos extends Component
     {
         $this->validate();
 
-        // ✅ CONVERSÃO MANUAL PARA GARANTIR TIPO CORRETO
         $duracaoInt = (int) $this->duracao_minutos;
 
-        // Converter preço brasileiro para formato do banco
         $precoFormatado = null;
         if ($this->preco) {
-            // Remove pontos e substitui vírgula por ponto
             $precoFormatado = str_replace(['.', ','], ['', '.'], $this->preco);
             $precoFormatado = (float) $precoFormatado;
         }
@@ -88,32 +85,29 @@ class Servicos extends Component
         $dados = [
             'nome' => $this->nome,
             'descricao' => $this->descricao,
-            'duracao_minutos' => $duracaoInt, // ✅ GARANTIDO COMO INTEGER
+            'duracao_minutos' => $duracaoInt,
             'preco' => $precoFormatado,
             'ativo' => $this->ativo
         ];
 
+        // ✅ SALVAR NO BANCO
         if ($this->editando) {
             $servico = Servico::find($this->servicoId);
             $servico->update($dados);
-             $mensagem = 'Serviço atualizado com sucesso!';
-            
-            // ✅ LIMPA OS CAMPOS APÓS ATUALIZAR
-            $this->resetarFormulario();
+            $mensagem = 'Serviço atualizado com sucesso!';
         } else {
             Servico::create($dados);
             $mensagem = 'Serviço cadastrado com sucesso!';
-            
-            $this->editando = true; // para tentar ver se limpa os campos
-
-            $this->dispatch('$refresh');
-            
-            // ✅ LIMPA OS CAMPOS APÓS CRIAR
-            $this->resetarFormulario();
-            session()->flash('sucesso', $mensagem);
         }
+        
+        // ✅ LIMPAR CAMPOS (SEMPRE)
+        $this->resetarFormulario();
+        
+        // ✅ FEEDBACK E DISPATCHES (SEMPRE)
+        session()->flash('sucesso', $mensagem);
+        $this->dispatch('$refresh');
+        $this->dispatch('servico-salvo');
     }
-
     public function editar($id)
     {
         $servico = Servico::find($id);
