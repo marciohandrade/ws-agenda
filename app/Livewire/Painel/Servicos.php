@@ -141,6 +141,27 @@ class Servicos extends Component
     {
         $servico = Servico::find($id);
         
+        if (!$servico) {
+            session()->flash('erro', 'Serviço não encontrado!');
+            return;
+        }
+        
+        // ✅ DISPARA EVENTO PARA JAVASCRIPT CONFIRMAR
+        $this->dispatch('confirmar-exclusao', [
+            'id' => $id,
+            'nome' => $servico->nome
+        ]);
+    }
+
+    public function confirmarExclusao($id)
+    {
+        $servico = Servico::find($id);
+        
+        if (!$servico) {
+            session()->flash('erro', 'Serviço não encontrado!');
+            return;
+        }
+        
         // Verificar se existem agendamentos
         if ($servico->agendamentos()->count() > 0) {
             session()->flash('erro', 'Não é possível excluir este serviço pois existem agendamentos vinculados.');

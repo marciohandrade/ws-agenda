@@ -222,10 +222,8 @@
                                 <button wire:click="alternarStatus({{ $servico->id }})" 
                                         class="text-{{ $servico->ativo ? 'orange' : 'green' }}-600 hover:underline ml-2">
                                     {{ $servico->ativo ? 'Desativar' : 'Ativar' }}
-                                </button>
-                                
+                                </button>                                
                                 <button wire:click="excluir({{ $servico->id }})" 
-                                        onclick="return confirm('Tem certeza que deseja excluir este serviço?')"
                                         class="text-red-600 hover:underline ml-2">
                                     Excluir
                                 </button>
@@ -258,11 +256,40 @@
 
 </div> <!-- FECHA A DIV PRINCIPAL -->
 <script>
-document.addEventListener('livewire:init', () => {
+/* document.addEventListener('livewire:init', () => {
     Livewire.on('servico-salvo', () => {
         setTimeout(() => {
             location.reload();
         }, 500);
+    });
+}); */
+
+document.addEventListener('livewire:init', () => {
+    // ✅ LISTA DE EVENTOS QUE FAZEM RELOAD
+    const eventosReload = ['servico-salvo', 'servico-excluido'];
+    
+    eventosReload.forEach(evento => {
+        Livewire.on(evento, () => {
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        });
+    });
+});
+
+// Adicione junto com o outro script que já está funcionando
+document.addEventListener('livewire:init', () => {
+    // Seu script existente do servico-salvo...
+    
+    // ✅ NOVO: Confirmação de exclusão
+    Livewire.on('confirmar-exclusao', (dados) => {
+        const nome = dados[0].nome; // Livewire passa como array
+        const id = dados[0].id;
+        
+        const confirma = confirm(`Tem certeza que deseja excluir o serviço "${nome}"?`);
+        if (confirma) {
+            Livewire.find('{{ $this->getId() }}').call('confirmarExclusao', id);
+        }
     });
 });
 </script>
