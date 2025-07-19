@@ -219,10 +219,10 @@
                             <td class="p-2">
                                 <button wire:click="editar({{ $servico->id }})" class="text-blue-600 hover:underline">Editar</button>
                                 
-                                <button wire:click="alternarStatus({{ $servico->id }})" 
+                                <!-- <button wire:click="alternarStatus({{ $servico->id }})" 
                                         class="text-{{ $servico->ativo ? 'orange' : 'green' }}-600 hover:underline ml-2">
                                     {{ $servico->ativo ? 'Desativar' : 'Ativar' }}
-                                </button>                                
+                                </button>                                 -->
                                 <button wire:click="excluir({{ $servico->id }})" 
                                         class="text-red-600 hover:underline ml-2">
                                     Excluir
