@@ -36,9 +36,8 @@
             </div>
         </div> -->
 
-        {{-- ✅ ESTATÍSTICAS CORRIGIDAS (SEM @try/@catch) --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            
+        {{-- ✅ ESTATÍSTICAS CORRIGIDAS (SEM @try/@catch) --}}        
+        <div class="grid grid-cols-4 gap-2 sm:gap-4 mb-6">            
             @php
                 $totalAgendamentos = \DB::table('agendamentos')->where('user_id', $userId)->where('ativo', 1)->count();
                 $pendentes = \DB::table('agendamentos')->where('user_id', $userId)->where('status', 'pendente')->where('ativo', 1)->count();
@@ -47,53 +46,53 @@
             @endphp
 
             {{-- TOTAL --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="p-2 rounded-md bg-blue-100">
-                        <span class="text-blue-600 text-xl">📅</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center">
+                    <div class="p-1 sm:p-2 rounded-md bg-blue-100 self-center sm:self-auto">
+                        <span class="text-blue-600 text-sm sm:text-xl">📅</span>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Total</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $totalAgendamentos }}</p>
+                    <div class="mt-1 sm:mt-0 sm:ml-3 text-center sm:text-left">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Total</p>
+                        <p class="text-sm sm:text-lg font-semibold text-gray-900">{{ $totalAgendamentos }}</p>
                     </div>
                 </div>
             </div>
 
             {{-- PENDENTES --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="p-2 rounded-md bg-yellow-100">
-                        <span class="text-yellow-600 text-xl">⏰</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center">
+                    <div class="p-1 sm:p-2 rounded-md bg-yellow-100 self-center sm:self-auto">
+                        <span class="text-yellow-600 text-sm sm:text-xl">⏰</span>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Pendentes</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $pendentes }}</p>
+                    <div class="mt-1 sm:mt-0 sm:ml-3 text-center sm:text-left">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Pendentes</p>
+                        <p class="text-sm sm:text-lg font-semibold text-gray-900">{{ $pendentes }}</p>
                     </div>
                 </div>
             </div>
 
             {{-- CONFIRMADOS --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="p-2 rounded-md bg-green-100">
-                        <span class="text-green-600 text-xl">✅</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center">
+                    <div class="p-1 sm:p-2 rounded-md bg-green-100 self-center sm:self-auto">
+                        <span class="text-green-600 text-sm sm:text-xl">✅</span>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Confirmados</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $confirmados }}</p>
+                    <div class="mt-1 sm:mt-0 sm:ml-3 text-center sm:text-left">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Confirmados</p>
+                        <p class="text-sm sm:text-lg font-semibold text-gray-900">{{ $confirmados }}</p>
                     </div>
                 </div>
             </div>
 
             {{-- PRÓXIMO --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="p-2 rounded-md bg-purple-100">
-                        <span class="text-purple-600 text-xl">⭐</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center">
+                    <div class="p-1 sm:p-2 rounded-md bg-purple-100 self-center sm:self-auto">
+                        <span class="text-purple-600 text-sm sm:text-xl">⭐</span>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Próximo</p>
-                        <p class="text-sm font-semibold text-gray-900">
+                    <div class="mt-1 sm:mt-0 sm:ml-3 text-center sm:text-left">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Próximo</p>
+                        <p class="text-xs sm:text-sm font-semibold text-gray-900">
                             {{ $proximo ? \Carbon\Carbon::parse($proximo->data_agendamento)->format('d/m') : 'Nenhum' }}
                         </p>
                     </div>
@@ -207,22 +206,24 @@
         </div>
 
         {{-- ✅ AÇÕES --}}
-        <div class="mt-6 text-center space-x-4">
-            <a href="/perfil" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                👤 Meu Perfil
-            </a>
-            <a href="/agendar" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                📅 Novo Agendamento
-            </a>
+        <div class="mt-6 text-center">
+            <div class="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <a href="/perfil" class="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    👤 Meu Perfil
+                </a>
+                <a href="/agendar" class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                    📅 Novo Agendamento
+                </a>
+            </div>
         </div>
 
         {{-- 🎯 STATUS CORREÇÃO --}}
-        <div class="mt-6 text-center">
+        <!-- <div class="mt-6 text-center">
             <div class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                 <span class="mr-2">✅</span>
                 <span class="text-sm font-medium">Versão corrigida: sem @try/@catch + campo duracao_minutos!</span>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 @endsection

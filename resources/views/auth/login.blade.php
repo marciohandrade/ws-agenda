@@ -68,13 +68,23 @@
                         <span class="text-blue-600 mr-2">🔒</span>
                         Senha
                     </label>
-                    <input type="password" 
-                           id="password" 
-                           name="password" 
-                           required 
-                           autocomplete="current-password"
-                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-500 @enderror"
-                           placeholder="Sua senha">
+                    <div class="relative">
+                        <input type="password" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            autocomplete="current-password"
+                            class="w-full px-3 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-500 @enderror"
+                            placeholder="Sua senha">
+                        
+                        {{-- BOTÃO TOGGLE SENHA --}}
+                        <button type="button" 
+                                id="togglePassword"
+                                class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                                onclick="togglePasswordVisibility()">
+                            <span id="eyeIcon" class="text-lg">👁️</span>
+                        </button>
+                    </div>
                     @error('password')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -147,3 +157,27 @@
     </div>
 </div>
 @endsection
+{{-- JAVASCRIPT PARA TOGGLE DA SENHA --}}
+<script>
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (passwordInput.type === 'password') {
+        // Mostrar senha
+        passwordInput.type = 'text';
+        eyeIcon.textContent = '🙈'; // Olho fechado
+        eyeIcon.title = 'Ocultar senha';
+    } else {
+        // Ocultar senha
+        passwordInput.type = 'password';
+        eyeIcon.textContent = '👁️'; // Olho aberto
+        eyeIcon.title = 'Mostrar senha';
+    }
+}
+
+// Adicionar título inicial
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('eyeIcon').title = 'Mostrar senha';
+});
+</script>

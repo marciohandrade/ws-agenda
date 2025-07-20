@@ -601,9 +601,21 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Senha *</label>
-                        <input type="password" wire:model="senha" 
-                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senha') border-red-500 @enderror"
-                               placeholder="Mínimo 6 caracteres">
+                        <div class="relative">
+                            <input type="password" 
+                                id="senha" 
+                                wire:model="senha" 
+                                oninput="validarSenhas()"
+                                class="w-full px-3 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senha') border-red-500 @enderror"
+                                placeholder="Mínimo 6 caracteres">
+                            
+                            {{-- BOTÃO TOGGLE SENHA --}}
+                            <button type="button" 
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                                    onclick="togglePassword('senha', 'eyeIconSenha')">
+                                <span id="eyeIconSenha" class="text-lg" title="Mostrar senha">👁️</span>
+                            </button>
+                        </div>
                         <p class="text-xs text-gray-500 mt-1">Deve conter letras e números</p>
                         @error('senha')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -611,10 +623,46 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha *</label>
-                        <input type="password" wire:model="senhaConfirmacao" 
-                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senhaConfirmacao') border-red-500 @enderror"
-                               placeholder="Digite a senha novamente">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha *</label>
+                        <div class="relative">
+                            <input type="password" 
+                                id="senhaConfirmacao" 
+                                wire:model="senhaConfirmacao" 
+                                oninput="validarSenhas()"
+                                class="w-full px-3 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('senhaConfirmacao') border-red-500 @enderror"
+                                placeholder="Digite a senha novamente">
+                            
+                            {{-- BOTÃO TOGGLE CONFIRMAÇÃO --}}
+                            <button type="button" 
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                                    onclick="togglePassword('senhaConfirmacao', 'eyeIconConfirmacao')">
+                                <span id="eyeIconConfirmacao" class="text-lg" title="Mostrar senha">👁️</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Deve conter letras e números</p>
+                        
+                        {{-- FEEDBACK DE VALIDAÇÃO EM TEMPO REAL --}}
+                        <div id="senhaValidacao" class="mt-2 text-xs hidden">
+                            <div id="senhaMatch" class="hidden">
+                                <p class="text-green-600 flex items-center">
+                                    <span class="mr-1">✅</span>
+                                    As senhas coincidem
+                                </p>
+                            </div>
+                            <div id="senhaDiferente" class="hidden">
+                                <p class="text-red-600 flex items-center">
+                                    <span class="mr-1">❌</span>
+                                    As senhas não coincidem
+                                </p>
+                            </div>
+                            <div id="senhaVazia" class="hidden">
+                                <p class="text-gray-500 flex items-center">
+                                    <span class="mr-1">⏳</span>
+                                    Digite a confirmação da senha
+                                </p>
+                            </div>
+                        </div>
+                        
                         @error('senhaConfirmacao')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -741,5 +789,103 @@
             console.log('Horários recarregados com sucesso');
         });
     });
+
+    function togglePassword(inputId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const eyeIcon = document.getElementById(iconId);
+    
+    if (passwordInput.type === 'password') {
+        // Mostrar senha
+        passwordInput.type = 'text';
+        eyeIcon.textContent = '🙈'; // Olho fechado
+        eyeIcon.title = 'Ocultar senha';
+    } else {
+        // Ocultar senha
+        passwordInput.type = 'password';
+        eyeIcon.textContent = '👁️'; // Olho aberto
+        eyeIcon.title = 'Mostrar senha';
+    }
+}
+
+// Função para validar senhas em tempo real
+function validarSenhas() {
+    const senha = document.getElementById('senha').value;
+    const senhaConfirmacao = document.getElementById('senhaConfirmacao').value;
+    
+    const validacaoDiv = document.getElementById('senhaValidacao');
+    const matchDiv = document.getElementById('senhaMatch');
+    const differentDiv = document.getElementById('senhaDiferente');
+    const emptyDiv = document.getElementById('senhaVazia');
+    
+    // Esconder todos os estados primeiro
+    matchDiv.classList.add('hidden');
+    differentDiv.classList.add('hidden');
+    emptyDiv.classList.add('hidden');
+    
+    // Se senha principal estiver vazia, não mostrar nada
+    if (!senha) {
+        validacaoDiv.classList.add('hidden');
+        return;
+    }
+    
+    // Mostrar div de validação
+    validacaoDiv.classList.remove('hidden');
+    
+    // Se confirmação estiver vazia
+    if (!senhaConfirmacao) {
+        emptyDiv.classList.remove('hidden');
+        return;
+    }
+    
+    // Comparar senhas
+    if (senha === senhaConfirmacao) {
+        matchDiv.classList.remove('hidden');
+        
+        // Adicionar borda verde nos campos
+        document.getElementById('senha').classList.remove('border-red-500');
+        document.getElementById('senhaConfirmacao').classList.remove('border-red-500');
+        document.getElementById('senha').classList.add('border-green-500');
+        document.getElementById('senhaConfirmacao').classList.add('border-green-500');
+    } else {
+        differentDiv.classList.remove('hidden');
+        
+        // Adicionar borda vermelha nos campos
+        document.getElementById('senha').classList.remove('border-green-500');
+        document.getElementById('senhaConfirmacao').classList.remove('border-green-500');
+        document.getElementById('senha').classList.add('border-red-500');
+        document.getElementById('senhaConfirmacao').classList.add('border-red-500');
+    }
+}
+
+// Configurar títulos iniciais quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+    const eyeIconSenha = document.getElementById('eyeIconSenha');
+    const eyeIconConfirmacao = document.getElementById('eyeIconConfirmacao');
+    
+    if (eyeIconSenha) {
+        eyeIconSenha.title = 'Mostrar senha';
+    }
+    if (eyeIconConfirmacao) {
+        eyeIconConfirmacao.title = 'Mostrar senha';
+    }
+});
+
+// Limpar bordas coloridas quando o usuário focar nos campos
+document.addEventListener('DOMContentLoaded', function() {
+    const senhaInput = document.getElementById('senha');
+    const confirmacaoInput = document.getElementById('senhaConfirmacao');
+    
+    if (senhaInput) {
+        senhaInput.addEventListener('focus', function() {
+            this.classList.remove('border-green-500', 'border-red-500');
+        });
+    }
+    
+    if (confirmacaoInput) {
+        confirmacaoInput.addEventListener('focus', function() {
+            this.classList.remove('border-green-500', 'border-red-500');
+        });
+    }
+});
     </script>
 </div>
