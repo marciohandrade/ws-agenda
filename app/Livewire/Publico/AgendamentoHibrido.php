@@ -505,7 +505,8 @@ class AgendamentoHibrido extends Component
     public function fazerLogin()
     {
         $this->validate([
-            'email' => 'required|email',
+            //'email' => 'required|email',
+            'email' => 'required|email:rfc,dns', // permite outros tipos de caracteres
             'senha' => 'required'
         ], [
             'email.required' => 'Digite seu e-mail',
@@ -661,7 +662,8 @@ class AgendamentoHibrido extends Component
         try {
             $this->validate([
                 'nome' => 'required|string|min:3|max:255',
-                'email' => 'required|email|unique:users,email',
+                //'email' => 'required|email|unique:users,email',
+                'email' => 'required|email:rfc,dns|unique:users,email', // permite outros caracteres
                 'telefone' => 'required|string|min:10|max:20',
                 'senha' => ['required', Password::min(6)->letters()->numbers()],
                 'senhaConfirmacao' => 'required|same:senha'
