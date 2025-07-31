@@ -21,10 +21,13 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
-                <select wire:model="cliente_id" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select wire:change="$set('cliente_id', $event.target.value)" 
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Selecione um cliente</option>
                     @foreach($clientes as $cliente)
-                        <option value="{{ $cliente->id }}">{{ $cliente->nome }} - {{ $cliente->telefone }}</option>
+                        <option value="{{ $cliente->id }}" {{ $cliente_id == $cliente->id ? 'selected' : '' }}>
+                            {{ $cliente->nome }} - {{ $cliente->telefone }}
+                        </option>
                     @endforeach
                 </select>
                 @error('cliente_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
@@ -32,10 +35,13 @@
 
             <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Serviço *</label>
-                <select wire:model="servico_id" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+               <select wire:change="$set('servico_id', $event.target.value)" 
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Selecione um serviço</option>
                     @foreach($servicos as $servico)
-                        <option value="{{ $servico->id }}">{{ $servico->nome }} - R$ {{ number_format($servico->preco, 2, ',', '.') }}</option>
+                        <option value="{{ $servico->id }}" {{ $servico_id == $servico->id ? 'selected' : '' }}>
+                            {{ $servico->nome }} - R$ {{ number_format($servico->preco, 2, ',', '.') }}
+                        </option>
                     @endforeach
                 </select>
                 @error('servico_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
@@ -47,10 +53,11 @@
             <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Data do Agendamento *</label>
                 <input type="date" 
-                       wire:model="data_agendamento"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('data_agendamento') border-red-500 @enderror"
-                       min="{{ date('Y-m-d') }}">
-                @error('data_agendamento') 
+                    value="{{ $data_agendamento }}"
+                    wire:change="$set('data_agendamento', $event.target.value)"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('data_agendamento') border-red-500 @enderror"
+                    class="..." min="{{ date('Y-m-d') }}">
+                    @error('data_agendamento') 
                     <span class="text-red-500 text-xs mt-1 block font-medium bg-red-50 p-2 rounded">
                         ⚠️ {{ $message }}
                     </span> 
@@ -60,7 +67,8 @@
             <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Horário *</label>
                 <input type="time" 
-                       wire:model="horario_agendamento"
+                      value="{{ $horario_agendamento }}"
+                       wire:change="$set('horario_agendamento', $event.target.value)"
                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('horario_agendamento') border-red-500 @enderror">
                 @error('horario_agendamento') 
                     <span class="text-red-500 text-xs mt-1 block font-medium bg-red-50 p-2 rounded">
@@ -71,11 +79,12 @@
 
             <div class="w-full sm:col-span-2 lg:col-span-1">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-                <select wire:model="status" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="pendente">Pendente</option>
-                    <option value="confirmado">Confirmado</option>
-                    <option value="concluido">Concluído</option>
-                    <option value="cancelado">Cancelado</option>
+                <select wire:change="$set('status', $event.target.value)" 
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="pendente" {{ $status == 'pendente' ? 'selected' : '' }}>Pendente</option>
+                    <option value="confirmado" {{ $status == 'confirmado' ? 'selected' : '' }}>Confirmado</option>
+                    <option value="concluido" {{ $status == 'concluido' ? 'selected' : '' }}>Concluído</option>
+                    <option value="cancelado" {{ $status == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
                 </select>
                 @error('status') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
             </div>

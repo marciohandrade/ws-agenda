@@ -46,7 +46,7 @@
         <!-- Linha 1: Nome -->
         <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
-            <input type="text" wire:model="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite o nome completo">
+            <input type="text" wire:change="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite o nome completo">
             @error('nome') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
@@ -54,13 +54,13 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[220px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
-                <input type="email" wire:model="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite o e-mail">
+                <input type="email" wire:model.defer="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite o e-mail">
                 @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
-                <input type="text" wire:model="telefone" x-mask="(99) 99999-9999" maxlength="15" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="(11) 99999-9999">
+                <input type="text" wire:model.defer="telefone" x-mask="(99) 99999-9999" maxlength="15" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="(11) 99999-9999">
                 @error('telefone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
@@ -68,7 +68,7 @@
         <!-- Linha 3: Tipo de Usuário com explicações -->
         <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Usuário *</label>
-            <select wire:model="tipoUsuario" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <select wire:model.defer="tipoUsuario" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="">Selecione o tipo</option>
                 @foreach($this->tiposUsuarioDisponiveis as $valor => $label)
                     <option value="{{ $valor }}">{{ $label }}</option>
@@ -94,13 +94,13 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Senha *</label>
-                <input type="password" wire:model="senha" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Mínimo 6 caracteres">
+                <input type="password" wire:model.defer="senha" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Mínimo 6 caracteres">
                 @error('senha') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar Senha *</label>
-                <input type="password" wire:model="senhaConfirmacao" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite a senha novamente">
+                <input type="password" wire:model.defer="senhaConfirmacao" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite a senha novamente">
                 @error('senhaConfirmacao') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
@@ -219,9 +219,13 @@
                         <td class="p-2">{{ $usuario->created_at->format('d/m/Y') }}</td>
                         <td class="p-2">
                             <button wire:click="editar({{ $usuario->id }})" class="text-blue-600 hover:underline">Editar</button>
+                                                   
                             @if($usuario->isDeletable())
-                                <button wire:click="excluir({{ $usuario->id }})" class="text-red-600 hover:underline ml-2" 
-                                        onclick="return confirm('Tem certeza que deseja excluir este usuário?')">Excluir</button>
+                            <button wire:click="excluir({{ $usuario->id }})" 
+                                    wire:confirm="Tem certeza que deseja excluir este usuário?"
+                                    class="text-red-600 hover:bg-red-100 text-xs px-2 py-1 rounded transition-colors">
+                                Excluir
+                            </button>
                             @else
                                 <span class="text-gray-400 ml-2" title="Não pode ser excluído">Protegido</span>
                             @endif

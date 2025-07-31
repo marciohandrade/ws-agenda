@@ -1,4 +1,4 @@
-<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+<div class="max-w-6xl mx-auto p-4 sm:p-6 bg-white rounded shadow">
     <h2 class="text-2xl font-bold mb-4">Painel Administrativo / Cadastro de Cliente</h2>
 
     @if (session()->has('mensagem'))
@@ -30,7 +30,10 @@
         <!-- Linha 1: Nome (linha única) -->
         <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-            <input type="text" wire:model="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <input type="text" 
+                   value="{{ $nome }}"
+                   wire:change="$set('nome', $event.target.value)"
+                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             @error('nome') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
@@ -38,13 +41,21 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[220px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" wire:model="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="email" 
+                       value="{{ $email }}"
+                       wire:change="$set('email', $event.target.value)"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                <input type="text" wire:model="telefone" x-mask="(99) 99999-9999" maxlength="15" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" 
+                       value="{{ $telefone }}"
+                       wire:change="$set('telefone', $event.target.value)"
+                       onkeyup="mascaraTelefone(this)"
+                       maxlength="15" 
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 @error('telefone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
@@ -53,20 +64,23 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
-                <input type="date" wire:model="data_nascimento"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    max="{{ date('Y-m-d') }}" min="1900-01-01">
+                <input type="date" 
+                       value="{{ $data_nascimento }}"
+                       wire:change="$set('data_nascimento', $event.target.value)"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       max="{{ date('Y-m-d') }}" min="1900-01-01">
                 @error('data_nascimento') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Gênero</label>
-                <select wire:model="genero" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Selecione</option>
-                    <option value="Masculino">Masculino</option>
-                    <option value="Feminino">Feminino</option>
-                    <option value="Não-binário">Não-binário</option>
-                    <option value="Prefere não informar">Prefere não informar</option>
+                <select wire:change="$set('genero', $event.target.value)" 
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="" {{ $genero == '' ? 'selected' : '' }}>Selecione</option>
+                    <option value="Masculino" {{ $genero == 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                    <option value="Feminino" {{ $genero == 'Feminino' ? 'selected' : '' }}>Feminino</option>
+                    <option value="Não-binário" {{ $genero == 'Não-binário' ? 'selected' : '' }}>Não-binário</option>
+                    <option value="Prefere não informar" {{ $genero == 'Prefere não informar' ? 'selected' : '' }}>Prefere não informar</option>
                 </select>
                 @error('genero') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
@@ -76,15 +90,25 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
-                <input type="text" x-data x-mask="999.999.999-99" wire:model.defer="cpf"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="000.000.000-00">
+                <input type="text" 
+                        value="{{ $cpf }}"
+                        wire:change="$set('cpf', $event.target.value)"
+                        onkeyup="mascaraCpf(this)"
+                        maxlength="14" 
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="000.000.000-00">
                 @error('cpf') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                <input type="text" x-data x-mask="99999-999" wire:model.defer="cep"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="00000-000">
+                <input type="text" 
+                       value="{{ $cep }}"
+                       wire:change="$set('cep', $event.target.value)"
+                        onkeyup="mascaraCep(this)"
+                        maxlength="9" 
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="00000-000">
                 @error('cep') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
@@ -92,9 +116,11 @@
         <!-- Linha 5: Endereço -->
         <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
-            <input type="text" wire:model.defer="endereco"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                maxlength="80" placeholder="Rua, Avenida...">
+            <input type="text" 
+                   value="{{ $endereco }}"
+                   wire:change="$set('endereco', $event.target.value)"
+                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   maxlength="80" placeholder="Rua, Avenida...">
             @error('endereco') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
         </div>
 
@@ -102,17 +128,21 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[120px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
-                <input type="text" wire:model.defer="numero"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    maxlength="10" placeholder="123">
+                <input type="text" 
+                       value="{{ $numero }}"
+                       wire:change="$set('numero', $event.target.value)"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       maxlength="10" placeholder="123">
                 @error('numero') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
-                <input type="text" wire:model.defer="complemento"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    maxlength="30" placeholder="Apto, Bloco, Fundos...">
+                <input type="text" 
+                       value="{{ $complemento }}"
+                       wire:change="$set('complemento', $event.target.value)"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       maxlength="30" placeholder="Apto, Bloco, Fundos...">
                 @error('complemento') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
         </div>
@@ -132,6 +162,19 @@
         </div>
 
     </form>
+
+    <!-- ✅ FILTRO DE PESQUISA ADICIONADO -->
+    <div class="w-full space-y-6 mt-8 mb-8 p-6 bg-gray-50 rounded-lg">
+        <h3 class="text-xl font-bold">Filtros de Pesquisa</h3>
+        
+        <div class="flex flex-col">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Pesquisar clientes</label>
+            <input type="text" 
+                   wire:model.live="pesquisa" 
+                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="Digite o nome, email ou telefone...">
+        </div>
+    </div>
 
     <h3 class="text-xl font-bold mb-2">Lista de Clientes</h3>
 
@@ -157,20 +200,107 @@
                         <td class="p-2">{{ $cliente->nome }}</td>
                         <td class="p-2">{{ $cliente->email }}</td>
                         <td class="p-2">{{ $cliente->telefone }}</td>
-                        <td class="p-2">{{ \Carbon\Carbon::parse($cliente->data_nascimento)->format('d/m/Y') }}</td>
-                        <td class="p-2">{{ $cliente->genero }}</td>
+                        <td class="p-2">
+                            {{ $cliente->data_nascimento ? \Carbon\Carbon::parse($cliente->data_nascimento)->format('d/m/Y') : '-' }}
+                        </td>
+                        <td class="p-2">{{ $cliente->genero ?? '-' }}</td>
                         <td class="p-2">
                             <button wire:click="editar({{ $cliente->id }})" class="text-blue-600 hover:underline">Editar</button>
-                            <button wire:click="excluir({{ $cliente->id }})" class="text-red-600 hover:underline ml-2">Excluir</button>
+                            <!-- <button wire:click="excluir({{ $cliente->id }})" class="text-red-600 hover:underline ml-2">Excluir</button> -->
+                            <button wire:click="excluir({{ $cliente->id }})" 
+                                    wire:confirm="Tem certeza que deseja excluir este cliente?"
+                                    class="text-red-600 hover:bg-red-100 text-xs px-2 py-1 rounded transition-colors ml-2">
+                                Excluir
+                            </button>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center text-gray-500 p-4">Nenhum cliente cadastrado.</td>
+                        <td colspan="6" class="text-center py-8">
+                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                            <h5 class="text-gray-600 text-lg mb-2">Nenhum cliente encontrado</h5>
+                            @if($pesquisa)
+                                <p class="text-gray-500">Tente ajustar sua pesquisa ou 
+                                    <button wire:click="$set('pesquisa', '')" class="text-blue-600 hover:underline">limpe o filtro</button>
+                                </p>
+                            @else
+                                <p class="text-gray-500">Adicione o primeiro cliente preenchendo o formulário acima</p>
+                            @endif
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
+        
+        <!-- ✅ PAGINAÇÃO ADICIONADA -->
+        @if($clientes->hasPages())
+            <div class="mt-4 flex justify-center">
+                {{ $clientes->links() }}
+            </div>
+        @endif
     </div>
 
 </div>
+<script>
+// ✅ MÁSCARAS DE FORMATAÇÃO
+function mascaraTelefone(input) {
+    let valor = input.value.replace(/\D/g, '');
+    if (valor.length <= 11) {
+        valor = valor.replace(/(\d{2})(\d)/, '($1) $2');
+        valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+    }
+    input.value = valor;
+}
+
+function mascaraCpf(input) {
+    let valor = input.value.replace(/\D/g, '');
+    if (valor.length <= 11) {
+        valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+        valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+        valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    input.value = valor;
+}
+
+function mascaraCep(input) {
+    let valor = input.value.replace(/\D/g, '');
+    if (valor.length <= 8) {
+        valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+    }
+    input.value = valor;
+}
+
+// ✅ FUNÇÃO ÚNICA DE LIMPEZA
+function limparFormulario() {
+    // Limpar todos os inputs (exceto botões)
+    document.querySelectorAll('input:not([type="submit"]):not([type="button"]):not([type="hidden"])').forEach(input => {
+        input.value = '';
+    });
+    
+    // Limpar selects
+    document.querySelectorAll('select').forEach(select => {
+        select.selectedIndex = 0;
+    });
+    
+    // Limpar textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.value = '';
+    });
+    
+    console.log('Formulário limpo!');
+}
+
+// ✅ EVENT LISTENER ÚNICO
+document.addEventListener('livewire:init', () => {
+    // Escutar eventos de limpeza
+    Livewire.on('cliente-salvo', () => {
+        setTimeout(limparFormulario, 100);
+    });
+    
+    Livewire.on('campos-resetados', () => {
+        setTimeout(limparFormulario, 100);
+    });
+});
+</script>

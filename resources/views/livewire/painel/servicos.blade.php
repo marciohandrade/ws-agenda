@@ -53,7 +53,7 @@
 
         <!-- ✅ INDICADOR DE EDIÇÃO -->
         @if($editando)
-            <div class="bg-yellow-100 border-l-4 border-yellow-400 p-4 mb-6">
+            <!-- <div class="bg-yellow-100 border-l-4 border-yellow-400 p-4 mb-6">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -67,7 +67,7 @@
                         </p>
                     </div>
                 </div>
-            </div>
+            </div> -->
         @endif
 
         <!-- ✅ NOME DO SERVIÇO -->

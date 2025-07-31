@@ -139,6 +139,8 @@ class Agendamentos extends Component
 
             // Limpa o formulário após salvar
             $this->resetarFormulario();
+            $this->dispatch('$refresh');
+            $this->resetPage();
 
         } catch (\Exception $e) {
             session()->flash('erro', 'Erro ao salvar agendamento: ' . $e->getMessage());
@@ -147,6 +149,9 @@ class Agendamentos extends Component
 
     public function editar($agendamento_id)
     {
+        
+        //dd("Método editar chamado com ID: " . $agendamento_id);
+
         try {
             $agendamento = Agendamento::findOrFail($agendamento_id);
             
@@ -178,6 +183,7 @@ class Agendamentos extends Component
             'servico_id',
             'data_agendamento',
             'horario_agendamento',
+            'status',
             'observacoes',
             'agendamento_id'
         ]);
