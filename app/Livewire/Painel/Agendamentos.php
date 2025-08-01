@@ -122,7 +122,7 @@ class Agendamentos extends Component
                     'observacoes' => $this->observacoes
                 ]);
 
-                session()->flash('sucesso', 'Agendamento atualizado com sucesso!');
+                session()->flash('mensagem', 'Agendamento atualizado com sucesso!');
             } else {
                 // Cria novo agendamento
                 Agendamento::create([
@@ -134,7 +134,7 @@ class Agendamentos extends Component
                     'observacoes' => $this->observacoes
                 ]);
 
-                session()->flash('sucesso', 'Agendamento criado com sucesso!');
+                session()->flash('mensagem', 'Agendamento criado com sucesso!');
             }
 
             // Limpa o formulário após salvar
@@ -143,7 +143,7 @@ class Agendamentos extends Component
             $this->resetPage();
 
         } catch (\Exception $e) {
-            session()->flash('erro', 'Erro ao salvar agendamento: ' . $e->getMessage());
+            session()->flash('mensagem', 'Erro ao salvar agendamento: ' . $e->getMessage());
         }
     }
 
@@ -171,7 +171,7 @@ class Agendamentos extends Component
             $this->resetErrorBag();
 
         } catch (\Exception $e) {
-            session()->flash('erro', 'Erro ao carregar agendamento para edição.');
+            session()->flash('mensagem', 'Erro ao carregar agendamento para edição.');
         }
     }
 
@@ -216,9 +216,35 @@ class Agendamentos extends Component
         }
     }
 
+
     public function cancelar($agendamento_id)
     {
         $this->alterarStatus($agendamento_id, 'cancelado');
+    }
+
+    public function cancelarFormulario()
+    {
+        // Limpar todos os campos do formulário
+        $this->reset([
+            'cliente_id',
+            'servico_id',
+            'data_agendamento',
+            'horario_agendamento',
+            'status',
+            'observacoes',
+            'agendamento_id'
+        ]);
+
+        // Reseta estados
+        $this->editando = false;
+        $this->status = 'pendente';
+
+        // Limpa erros de validação
+        $this->resetErrorBag();
+        $this->resetValidation();
+        
+        // ✅ SEMPRE FORÇAR REFRESH (igual ao sistema de clientes)
+        return redirect()->to(request()->header('Referer'));
     }
 
     public function excluir($agendamento_id)
@@ -227,7 +253,7 @@ class Agendamentos extends Component
             $agendamento = Agendamento::findOrFail($agendamento_id);
             $agendamento->delete();
 
-            session()->flash('sucesso', 'Agendamento excluído com sucesso!');
+            session()->flash('mensagem', 'Agendamento excluído com sucesso!');
 
             // Se estava editando o agendamento excluído, limpa o formulário
             if ($this->editando && $this->agendamento_id == $agendamento_id) {

@@ -130,15 +130,16 @@ class GerenciadorUsuarios extends Component
                 // ✅ ATUALIZAR USUÁRIO EXISTENTE
                 User::find($this->usuarioId)->update($dados);
                 $tipoNome = $this->getTipoNomeAmigavel($this->tipoUsuario);
-                session()->flash('mensagem-sucesso', "{$tipoNome} '{$this->nome}' atualizado com sucesso!");
+                session()->flash('sucesso', "{$tipoNome} '{$this->nome}' atualizado com sucesso!");
             } else {
                 // ✅ CRIAR NOVO USUÁRIO
                 User::create($dados);
                 $tipoNome = $this->getTipoNomeAmigavel($this->tipoUsuario);
-                session()->flash('mensagem-sucesso', "Novo {$tipoNome} '{$this->nome}' criado com sucesso!");
+                session()->flash('sucesso', "Novo {$tipoNome} '{$this->nome}' criado com sucesso!");
             }
 
-            $this->resetCampos();
+            // ✅ FORÇAR REFRESH (igual aos outros sistemas)
+            return redirect()->to(request()->header('Referer'));
 
         } catch (\Exception $e) {
             $this->addError('geral', 'Erro ao salvar usuário: ' . $e->getMessage());
@@ -148,7 +149,7 @@ class GerenciadorUsuarios extends Component
     private function getTipoNomeAmigavel($tipo)
     {
         return match($tipo) {
-            'super_admin' => 'Super Administrador', // ✅ ADICIONAR ESTE CASO
+            'super_admin' => 'Super Administrador',
             'admin' => 'Administrador',
             'colaborador' => 'Colaborador',
             'usuario' => 'Cliente',
@@ -161,7 +162,7 @@ class GerenciadorUsuarios extends Component
         $usuario = User::find($usuarioId);
         
         if (!$usuario || !$this->podeGerenciarUsuario($usuario)) {
-            session()->flash('mensagem-erro', 'Usuário não encontrado ou sem permissão para editá-lo.');
+            session()->flash('erro', 'Usuário não encontrado ou sem permissão para editá-lo.');
             return;
         }
 
@@ -184,12 +185,12 @@ class GerenciadorUsuarios extends Component
             $usuario = User::find($usuarioId);
             
             if (!$usuario || !$this->podeGerenciarUsuario($usuario)) {
-                session()->flash('mensagem-erro', 'Usuário não encontrado ou sem permissão para excluí-lo.');
+                session()->flash('erro', 'Usuário não encontrado ou sem permissão para excluí-lo.');
                 return;
             }
 
             if (!$usuario->isDeletable()) {
-                session()->flash('mensagem-erro', 'Este usuário não pode ser excluído (é o último admin ou super admin).');
+                session()->flash('erro', 'Este usuário não pode ser excluído (é o último admin ou super admin).');
                 return;
             }
 
@@ -197,10 +198,12 @@ class GerenciadorUsuarios extends Component
             $tipoUsuario = $this->getTipoNomeAmigavel($usuario->tipo_usuario);
             $usuario->delete();
 
-            session()->flash('mensagem-sucesso', "{$tipoUsuario} '{$nomeUsuario}' excluído com sucesso.");
+            // ✅ PADRONIZADO: usar 'sucesso' em vez de 'mensagem-sucesso'
+            session()->flash('sucesso', "{$tipoUsuario} '{$nomeUsuario}' excluído com sucesso.");
             
         } catch (\Exception $e) {
-            session()->flash('mensagem-erro', 'Erro ao excluir usuário: ' . $e->getMessage());
+            // ✅ PADRONIZADO: usar 'erro' em vez de 'mensagem-erro'
+            session()->flash('erro', 'Erro ao excluir usuário: ' . $e->getMessage());
         }
     }
 
@@ -215,6 +218,26 @@ class GerenciadorUsuarios extends Component
         $this->senhaConfirmacao = '';
         $this->editarSenha = false;
         $this->resetErrorBag();
+    }
+
+    /**
+     * ✅ NOVO MÉTODO - Cancela formulário e força refresh da página (igual aos outros sistemas)
+     */
+    public function cancelarFormulario()
+    {
+        // Limpar todos os campos
+        $this->usuarioId = null;
+        $this->nome = '';
+        $this->email = '';
+        $this->telefone = '';
+        $this->tipoUsuario = 'usuario';
+        $this->senha = '';
+        $this->senhaConfirmacao = '';
+        $this->editarSenha = false;
+        $this->resetErrorBag();
+        
+        // ✅ SEMPRE FORÇAR REFRESH (igual aos outros sistemas)
+        return redirect()->to(request()->header('Referer'));
     }
 
     private function podeGerenciarUsuario($usuario)
