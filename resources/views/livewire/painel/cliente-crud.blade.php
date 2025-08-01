@@ -148,17 +148,21 @@
         </div>
 
         <!-- Linha Final: Botões Centralizados -->
-        <div class="w-full flex justify-center mt-6">
-            @if ($cliente_id)
-                <button type="button" wire:click="resetCampos"
-                        class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mr-4">
-                    Cancelar
-                </button>
-            @endif
+        <div class="w-full flex justify-center mt-6 gap-8">
+        
+            <!-- ✅ BOTÃO CANCELAR - APARECE SEMPRE -->
+           <button type="button" 
+                wire:click="resetCampos"
+                class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">
+            Cancelar
+        </button>
 
-            <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-900">
+            <!-- ✅ BOTÃO PRINCIPAL -->
+            <button type="submit" 
+                    class="bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-900 transition-colors">
                 {{ $cliente_id ? 'Atualizar' : 'Cadastrar' }}
             </button>
+            
         </div>
 
     </form>

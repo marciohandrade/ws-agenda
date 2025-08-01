@@ -32,7 +32,18 @@ class ClienteCrud extends Component
             'telefone' => 'required|string|max:15',
             'data_nascimento' => 'required|date|before:today|max:10|after:1900-01-01',
             'genero' => 'nullable|string|max:50',
-            'cpf' => 'required|string|max:14|unique:clientes,cpf,' . $this->cliente_id,
+            //'cpf' => 'required|string|max:14|unique:clientes,cpf,' . $this->cliente_id,
+            'cpf' => [
+                        'required',
+                        'string',
+                        'max:14',
+                        'unique:clientes,cpf,' . $this->cliente_id,
+                        function ($attribute, $value, $fail) {
+                            if (!$this->validarCpf($value)) {
+                                $fail('O CPF informado é inválido.');
+                            }
+                        },
+                    ],
             'cep' => 'nullable|string|max:9',
             //'cep' => 'required|regex:/^\d{5}-?\d{3}$/',
             'endereco' => 'required|string|max:80',
@@ -59,6 +70,35 @@ class ClienteCrud extends Component
     public function updatingPesquisa()
     {
         $this->resetPage();
+    }
+
+    private function validarCpf($cpf)
+    {
+        // Remove formatação
+        $cpf = preg_replace('/[^0-9]/', '', $cpf);
+        
+        // Verifica se tem 11 dígitos
+        if (strlen($cpf) != 11) {
+            return false;
+        }
+        
+        // Verifica se todos os dígitos são iguais
+        if (preg_match('/(\d)\1{10}/', $cpf)) {
+            return false;
+        }
+        
+        // Calcula os dígitos verificadores
+        for ($t = 9; $t < 11; $t++) {
+            for ($d = 0, $c = 0; $c < $t; $c++) {
+                $d += $cpf[$c] * (($t + 1) - $c);
+            }
+            $d = ((10 * $d) % 11) % 10;
+            if ($cpf[$c] != $d) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     public function salvar()
@@ -141,6 +181,71 @@ class ClienteCrud extends Component
             ]); */
             
             $this->resetErrorBag();
+        }
+    }
+
+    // ✅ ADICIONAR ESTE MÉTODO NO SEU COMPONENTE ClienteCrud.php
+    public function cancelarEdicao()
+    {
+        // Limpar todos os campos
+        $this->reset([
+            'cliente_id', 
+            'nome', 
+            'email', 
+            'telefone', 
+            'data_nascimento',
+            'genero', 
+            'cpf', 
+            'cep', 
+            'endereco', 
+            'numero',
+            'complemento',
+            'editandoId'  // ✅ Importante limpar este também
+        ]);
+        
+        $this->resetErrorBag();
+        $this->resetValidation();
+        
+        // ✅ FORÇAR REFRESH DA PÁGINA (igual ao que você quer)
+        return redirect()->to(request()->header('Referer'));
+    }
+
+    // ✅ ADICIONAR ESTE MÉTODO NO SEU COMPONENTE ClienteCrud.php
+    // (COLOQUE DEPOIS DO MÉTODO salvar() ou resetCampos())
+
+    /**
+     * Cancela ação atual (cadastro ou edição)
+     */
+    public function cancelar()
+    {
+        $estaEditando = !empty($this->cliente_id);
+        
+        // Limpar todos os campos
+        $this->reset([
+            'cliente_id', 
+            'nome', 
+            'email', 
+            'telefone', 
+            'data_nascimento',
+            'genero', 
+            'cpf', 
+            'cep', 
+            'endereco', 
+            'numero',
+            'complemento',
+            'editandoId'
+        ]);
+        
+        $this->resetErrorBag();
+        $this->resetValidation();
+        
+        if ($estaEditando) {
+            // ✅ EDIÇÃO: Refresh da página (como você quer)
+            return redirect()->to(request()->header('Referer'));
+        } else {
+            // ✅ CADASTRO: Apenas limpar campos (mais suave)
+            $this->dispatch('campos-resetados');
+            session()->flash('mensagem', 'Formulário limpo com sucesso.');
         }
     }
 
