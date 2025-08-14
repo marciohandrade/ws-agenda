@@ -108,6 +108,9 @@ Route::get('/agendar', function () {
     return view('agendamento');
 })->name('agendar');
 
+// 🚀 NOVA: AGENDAMENTO PÚBLICO OTIMIZADO (FUTURA MIGRAÇÃO)
+// Route::get('/agendar-servico', App\Livewire\Publico\AgendamentoPublico::class)->name('agendar.publico');
+
 /*
 |--------------------------------------------------------------------------
 | ✅ AUTENTICAÇÃO
@@ -177,6 +180,10 @@ Route::get('/meus-agendamentos', function () {
         return 'ERRO NOS AGENDAMENTOS: ' . $e->getMessage();
     }
 })->name('meus-agendamentos');
+
+// 🚀 NOVA: AGENDAMENTOS DO CLIENTE OTIMIZADOS (FUTURA MIGRAÇÃO)
+// Route::get('/meus-agendamentos', App\Livewire\Cliente\MeusAgendamentos::class)->name('cliente.agendamentos');
+// Route::get('/novo-agendamento', App\Livewire\Cliente\NovoAgendamento::class)->name('cliente.agendar');
 
 Route::post('/agendamento/cancelar/{id}', function($id) {
     if (!auth()->check()) {
@@ -285,7 +292,37 @@ Route::get('/dashboard', function () {
 
 // Painel - Rotas administrativas
 Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
-    Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
+    
+    // 🎯 AGENDAMENTOS - ARQUITETURA SEPARADA MOBILE-FIRST
+    Route::prefix('agendamentos')->name('agendamentos.')->group(function () {
+        
+        // Listagem principal (com filtros e ações rápidas)
+        Route::get('/', App\Livewire\Painel\AgendamentosLista::class)->name('index');
+        
+        // Formulário de novo agendamento
+        Route::get('/novo', App\Livewire\Painel\AgendamentosForm::class)->name('novo');
+        
+        // Formulário de edição
+        Route::get('/{agendamento}/editar', App\Livewire\Painel\AgendamentosForm::class)->name('editar');
+            
+        // 🚀 AÇÕES RÁPIDAS AJAX (para performance mobile)
+        Route::post('/{agendamento}/status', [App\Http\Controllers\AgendamentoController::class, 'alterarStatus'])
+            ->name('alterar-status');
+            
+        Route::delete('/{agendamento}', [App\Http\Controllers\AgendamentoController::class, 'excluir'])
+            ->name('excluir');
+            
+        Route::get('/horarios-disponiveis', [App\Http\Controllers\AgendamentoController::class, 'horariosDisponiveis'])
+            ->name('horarios-disponiveis');
+            
+        Route::get('/estatisticas', [App\Http\Controllers\AgendamentoController::class, 'estatisticas'])
+            ->name('estatisticas');
+    });
+    
+    // 🔄 ROTA ANTIGA (COMPATIBILIDADE TEMPORÁRIA)
+    // Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.old');
+    
+    // ✅ OUTRAS ROTAS DO PAINEL
     Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
     Route::get('/servicos', Servicos::class)->name('servicos.index');
     Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
