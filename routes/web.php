@@ -2,343 +2,293 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Livewire\Painel\Agendamentos;
 use App\Livewire\Painel\ClienteCrud;
 use App\Livewire\Painel\Servicos;
+use App\Livewire\Painel\Agendamentos;
 use App\Livewire\Painel\ConfiguracoesAgendamento;
+use App\Livewire\Publico\AgendamentoPublico;
+use App\Livewire\Painel\DashboardAgendamentos;
 use App\Livewire\Painel\GerenciadorUsuarios;
+use App\Livewire\Painel\CriarUsuario;
+use App\Livewire\Painel\AgendamentosLista;
+use App\Livewire\Usuario\MeusAgendamentos;
+use App\Livewire\Usuario\NovoAgendamento;
+
 
 /*
 |--------------------------------------------------------------------------
-| 🆘 ROTAS DE EMERGÊNCIA + DIAGNÓSTICO
+| ✅ ROTAS PÚBLICAS - MANTIDAS ORIGINAIS
 |--------------------------------------------------------------------------
 */
 
-// ✅ ROTA DE TESTE BÁSICO
-Route::get('/test', function () {
-    return 'Sistema funcionando! Data/Hora: ' . now();
-});
-
-// 🔍 ROTA DE DIAGNÓSTICO DETALHADO
-Route::get('/diagnostic', function () {
-    $output = '<h1>Diagnóstico do Sistema</h1>';
-    
-    try {
-        // Teste Laravel
-        $output .= '<p>✅ Laravel funcionando</p>';
-        
-        // Teste Banco
-        $userCount = DB::table('users')->count();
-        $output .= "<p>✅ Banco conectado - {$userCount} usuários</p>";
-        
-        // Teste View
-        $loginViewExists = view()->exists('auth.login');
-        $output .= '<p>' . ($loginViewExists ? '✅' : '❌') . ' View auth.login ' . ($loginViewExists ? 'existe' : 'NÃO EXISTE') . '</p>';
-        
-        // Teste Controller
-        $controllerExists = class_exists('App\Http\Controllers\Auth\AuthController');
-        $output .= '<p>' . ($controllerExists ? '✅' : '❌') . ' AuthController ' . ($controllerExists ? 'existe' : 'NÃO EXISTE') . '</p>';
-        
-        // Teste Auth
-        $output .= '<p>✅ Auth provider: ' . config('auth.defaults.provider') . '</p>';
-        
-        // Teste Model
-        $userModel = app()->make('App\Models\User');
-        $output .= '<p>✅ Model User carregado</p>';
-        
-        // Info do sistema
-        $output .= '<hr>';
-        $output .= '<p><strong>PHP:</strong> ' . PHP_VERSION . '</p>';
-        $output .= '<p><strong>Laravel:</strong> ' . app()->version() . '</p>';
-        $output .= '<p><strong>Memory:</strong> ' . memory_get_usage(true) . ' bytes</p>';
-        
-    } catch (\Exception $e) {
-        $output .= '<p>❌ ERRO: ' . $e->getMessage() . '</p>';
-        $output .= '<p>Arquivo: ' . $e->getFile() . ':' . $e->getLine() . '</p>';
-    }
-    
-    return $output;
-});
-
-// 🔍 TESTE DE LOGIN DIRETO (SEM CONTROLLER)
-Route::get('/login-test', function () {
-    return '
-    <!DOCTYPE html>
-    <html>
-    <head><title>Login Teste</title></head>
-    <body>
-        <h1>Teste de Login Direto</h1>
-        <form method="POST" action="/login-process">
-            '.csrf_field().'
-            <p>Email: <input type="email" name="email" value="ana.teste@clinica.local" required></p>
-            <p>Senha: <input type="password" name="password" value="123456" required></p>
-            <p><button type="submit">Login</button></p>
-        </form>
-        <p><a href="/diagnostic">Ver Diagnóstico</a></p>
-    </body>
-    </html>';
-});
-
-// 🔍 PROCESSAR LOGIN DIRETO
-Route::post('/login-process', function (Illuminate\Http\Request $request) {
-    try {
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            return 'LOGIN OK! Usuário: ' . auth()->user()->name;
-        } else {
-            return 'LOGIN FALHOU - credenciais incorretas';
-        }
-    } catch (\Exception $e) {
-        return 'ERRO NO LOGIN: ' . $e->getMessage();
-    }
-});
-
-/*
-|--------------------------------------------------------------------------
-| ✅ ROTAS ORIGINAIS
-|--------------------------------------------------------------------------
-*/
-
-// ✅ ROTA HOME
 Route::get('/', function () {
     return view('index');
 })->name('home');
 
-// ✅ AGENDAMENTO PÚBLICO
+// Rota para agendamento online (público) - MANTIDA ORIGINAL
 Route::get('/agendar', function () {
     return view('agendamento');
 })->name('agendar');
 
-// 🚀 NOVA: AGENDAMENTO PÚBLICO OTIMIZADO (FUTURA MIGRAÇÃO)
-// Route::get('/agendar-servico', App\Livewire\Publico\AgendamentoPublico::class)->name('agendar.publico');
+// Registro público desabilitado
+Route::get('/register', function () {
+    return redirect()->route('login')->with('info', 'O registro público foi desabilitado. Entre em contato com o administrador para criar uma conta.');
+})->name('register.disabled');
 
 /*
 |--------------------------------------------------------------------------
-| ✅ AUTENTICAÇÃO
+| ✅ ROTAS DE AUTENTICAÇÃO - FASE 1 COMPLETA
 |--------------------------------------------------------------------------
 */
 
-// Login - COM TRATAMENTO DE ERRO
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-
-
-Route::post('/login', function (Illuminate\Http\Request $request) {
-    try {
-        return app(AuthController::class)->login($request);
-    } catch (\Exception $e) {
-        return back()->with('error', 'Erro no login: ' . $e->getMessage());
-    }
+// Para usuários NÃO logados
+Route::middleware(['guest'])->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    
+    // ✅ RECUPERAÇÃO DE SENHA
+    Route::get('/forgot-password', function () {
+        return view('auth.forgot-password');
+    })->name('password.request');
+    
+    Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-Route::get('/logout', function () {
-    if (auth()->check()) {
-        auth()->logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-        return redirect('/login')->with('success', 'Logout realizado com sucesso!');
-    }
-    return redirect('/login');
-})->name('logout.get');
-
-
-// Logout
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Para usuários logados
+Route::middleware(['auth'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
 
 /*
 |--------------------------------------------------------------------------
-| ✅ ÁREA DO USUÁRIO
+| ✅ ROTAS DE USUÁRIO TIPO 'USUARIO' - FASE 2 COMPLETA
 |--------------------------------------------------------------------------
 */
 
-// Perfil
-Route::get('/perfil', function () {
-    try {
-        if (!auth()->check()) {
-            return redirect('/login');
-        }
-        return app(AuthController::class)->showProfile();
-    } catch (\Exception $e) {
-        return 'ERRO NO PERFIL: ' . $e->getMessage();
-    }
-})->name('perfil');
-
-Route::patch('/perfil', [AuthController::class, 'updateProfile'])->name('user.profile.update');
-
-// Agendamentos
-Route::get('/meus-agendamentos', function () {
-    if (!auth()->check()) {
-        return redirect('/login');
-    }
+Route::middleware(['auth', 'check.role:usuario'])->group(function () {
     
-    try {
-        if (!view()->exists('usuario.meus-agendamentos-lista')) {
-            return 'View meus-agendamentos-lista não encontrada';
-        }
+    // ✅ PERFIL DO USUÁRIO - IMPLEMENTADO NA FASE 2
+    Route::get('/perfil', [AuthController::class, 'showProfile'])->name('perfil');
+    Route::patch('/perfil', [AuthController::class, 'updateProfile'])->name('user.profile.update');
+    Route::put('/perfil', [AuthController::class, 'updateProfile']); // Fallback para PUT
+    
+    // ✅ LISTAGEM DE AGENDAMENTOS - IMPLEMENTADO NA FASE 2
+    Route::get('/meus-agendamentos', function () {
         return view('usuario.meus-agendamentos-lista');
-    } catch (\Exception $e) {
-        return 'ERRO NOS AGENDAMENTOS: ' . $e->getMessage();
-    }
-})->name('meus-agendamentos');
-
-// 🚀 NOVA: AGENDAMENTOS DO CLIENTE OTIMIZADOS (FUTURA MIGRAÇÃO)
-// Route::get('/meus-agendamentos', App\Livewire\Cliente\MeusAgendamentos::class)->name('cliente.agendamentos');
-// Route::get('/novo-agendamento', App\Livewire\Cliente\NovoAgendamento::class)->name('cliente.agendar');
-
-Route::post('/agendamento/cancelar/{id}', function($id) {
-    if (!auth()->check()) {
-        return redirect('/login');
-    }
+    })->name('meus-agendamentos');
     
-    try {
-        // Buscar o agendamento
-        $agendamento = \DB::table('agendamentos')
-            ->where('id', $id)
-            ->where('user_id', auth()->id())
-            ->first();
-        
-        if (!$agendamento) {
-            return back()->with('error', 'Agendamento não encontrado.');
-        }
-        
-        // Verificar se pode cancelar
-        $dataAgendamento = \Carbon\Carbon::parse($agendamento->data_agendamento);
-        $podeCarcelar = in_array($agendamento->status, ['pendente', 'confirmado']) && 
-                       $dataAgendamento->isFuture();
-        
-        if (!$podeCarcelar) {
-            return back()->with('error', 'Este agendamento não pode ser cancelado.');
-        }
-        
-        // Cancelar
-        \DB::table('agendamentos')
-            ->where('id', $id)
-            ->update([
-                'status' => 'cancelado',
-                'updated_at' => now()
-            ]);
-        
-        return back()->with('success', 'Agendamento cancelado com sucesso!');
-        
-    } catch (\Exception $e) {
-        return back()->with('error', 'Erro ao cancelar agendamento.');
-    }
-})->name('agendamento.cancelar');
-
-// Detalhes do agendamento
-Route::get('/agendamento/detalhes/{id}', function($id) {
-    if (!auth()->check()) {
-        return redirect('/login');
-    }
+    // ✅ NOVO AGENDAMENTO (componente Livewire existente) - Rota específica para usuários logados
+    Route::get('/usuario/agendar', NovoAgendamento::class)->name('usuario.novo-agendamento');
     
-    try {
-        $agendamento = \DB::table('agendamentos as a')
-            ->leftJoin('servicos as s', 'a.servico_id', '=', 's.id')
-            ->where('a.id', $id)
-            ->where('a.user_id', auth()->id())
-            ->select([
-                'a.*',
-                's.nome as servico_nome',
-                's.preco as servico_preco',
-                's.duracao_minutos as servico_duracao'
-            ])
-            ->first();
-            
-        if (!$agendamento) {
-            return back()->with('error', 'Agendamento não encontrado.');
-        }
-        
-        return response()->json($agendamento);
-        
-    } catch (\Exception $e) {
-        return back()->with('error', 'Erro ao buscar detalhes.');
-    }
-})->name('agendamento.detalhes');
+    // ✅ AÇÕES DE AGENDAMENTO
+    Route::post('/agendamento/cancelar/{id}', [AuthController::class, 'cancelarAgendamento'])->name('agendamento.cancelar');
+    Route::get('/agendamento/detalhes/{id}', [AuthController::class, 'detalhesAgendamento'])->name('agendamento.detalhes');
+});
 
 /*
 |--------------------------------------------------------------------------
-| ✅ DASHBOARD
+| ✅ DASHBOARD INTELIGENTE - OTIMIZADO
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', function () {
-    if (!auth()->check()) {
-        return redirect('/login');
+Route::middleware(['auth'])->get('/dashboard', function () {
+    $user = auth()->user();
+
+    // Headers específicos para Edge e cache
+    $userAgent = request()->userAgent();
+    if (str_contains($userAgent, 'Edge') || 
+        str_contains($userAgent, 'Edg/') ||
+        str_contains($userAgent, 'Trident')) {
+        
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
     }
     
-    $user = auth()->user();
+    // ✅ Log de acesso ao dashboard
+    \Log::info('Acesso ao dashboard', [
+        'user_id' => $user->id,
+        'tipo_usuario' => $user->tipo_usuario,
+        'email' => $user->email,
+        'ip' => request()->ip()
+    ]);
     
+    // ✅ Redirecionamento inteligente baseado no tipo de usuário
     switch ($user->tipo_usuario) {
         case 'super_admin':
-            return redirect('/painel/usuarios'); // ✅ SUPER ADMIN → USUÁRIOS
-            
         case 'admin':
         case 'colaborador':
-            return redirect('/painel/agendamentos'); // ✅ ADMIN/COLABORADOR → AGENDAMENTOS
+            return redirect()->route('agendamentos.index')
+                ->with('success', 'Bem-vindo ao painel administrativo, ' . $user->name . '!');
             
         case 'usuario':
-            return redirect('/meus-agendamentos');
+            return redirect()->route('meus-agendamentos')
+                ->with('success', 'Bem-vindo de volta, ' . $user->name . '!');
             
         default:
-            return redirect('/login');
+            \Log::warning('Tipo de usuário desconhecido tentando acessar dashboard', [
+                'user_id' => $user->id,
+                'tipo_usuario' => $user->tipo_usuario
+            ]);
+            
+            return redirect()->route('login')
+                ->with('error', 'Tipo de usuário não reconhecido. Entre em contato com o suporte.');
     }
 })->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
-| ✅ PAINEL ADMINISTRATIVO
+| ✅ ROTAS ADMINISTRATIVAS - MANTIDAS ORIGINAIS + MELHORIAS
 |--------------------------------------------------------------------------
 */
 
-// Painel - Rotas administrativas
-Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->group(function () {
+Route::middleware(['auth', 'check.role:super_admin,admin,colaborador'])->prefix('painel')->name('painel.')->group(function () {
     
-    // 🎯 AGENDAMENTOS - ARQUITETURA SEPARADA MOBILE-FIRST
-    Route::prefix('agendamentos')->name('agendamentos.')->group(function () {
-        
-        // Listagem principal (com filtros e ações rápidas)
-        Route::get('/', App\Livewire\Painel\AgendamentosLista::class)->name('index');
-        
-        // Formulário de novo agendamento
-        Route::get('/novo', App\Livewire\Painel\AgendamentosForm::class)->name('novo');
-        
-        // Formulário de edição
-        Route::get('/{agendamento}/editar', App\Livewire\Painel\AgendamentosForm::class)->name('editar');
-            
-        // 🚀 AÇÕES RÁPIDAS AJAX (para performance mobile)
-        Route::post('/{agendamento}/status', [App\Http\Controllers\AgendamentoController::class, 'alterarStatus'])
-            ->name('alterar-status');
-            
-        Route::delete('/{agendamento}', [App\Http\Controllers\AgendamentoController::class, 'excluir'])
-            ->name('excluir');
-            
-        Route::get('/horarios-disponiveis', [App\Http\Controllers\AgendamentoController::class, 'horariosDisponiveis'])
-            ->name('horarios-disponiveis');
-            
-        Route::get('/estatisticas', [App\Http\Controllers\AgendamentoController::class, 'estatisticas'])
-            ->name('estatisticas');
-    });
-    
-    // 🔄 ROTA ANTIGA (COMPATIBILIDADE TEMPORÁRIA)
-    // Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.old');
-    
-    // ✅ OUTRAS ROTAS DO PAINEL
-    Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
-    Route::get('/servicos', Servicos::class)->name('servicos.index');
-    Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
-    
-    // Rota de usuários - apenas para admin e super_admin
+    // ✅ ROTAS EXCLUSIVAS PARA ADMIN E SUPER_ADMIN
     Route::middleware(['check.role:super_admin,admin'])->group(function () {
         Route::get('/usuarios', GerenciadorUsuarios::class)->name('usuarios.index');
+        Route::get('/usuarios/criar', CriarUsuario::class)->name('usuarios.criar');
+        Route::get('/configuracoes-agendamento', ConfiguracoesAgendamento::class)->name('configuracoes-agendamento.index');
+        Route::get('/servicos', Servicos::class)->name('servicos.index');
     });
+    
+    // ✅ AGENDAMENTOS: Acesso para ADMIN, SUPER_ADMIN E COLABORADOR
+    //Route::get('/agendamentos', Agendamentos::class)->name('agendamentos.index');
+    Route::get('/agendamentos', AgendamentosLista::class)->name('agendamentos.index');
+    Route::get('/clientes', ClienteCrud::class)->name('clientes.index');
+    
+    // ✅ DASHBOARD ADMINISTRATIVO (opcional)
+    Route::get('/dashboard', DashboardAgendamentos::class)->name('dashboard');
+});
+
+// ✅ ROTAS EXCLUSIVAS PARA SUPER ADMIN
+Route::middleware(['auth', 'check.role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
+    // ✅ FUTURAS FUNCIONALIDADES DE SUPER ADMIN
+    Route::get('/sistema', function () {
+        return view('admin.sistema');
+    })->name('sistema');
+    
+    Route::get('/logs', function () {
+        return view('admin.logs');
+    })->name('logs');
+    
+    Route::get('/backup', function () {
+        return view('admin.backup');
+    })->name('backup');
 });
 
 /*
 |--------------------------------------------------------------------------
-| ✅ FALLBACK
+| ✅ ROTAS DE API (FUTURO)
 |--------------------------------------------------------------------------
 */
 
-Route::fallback(function () {
-    return response()->json(['error' => 'Route not found'], 404);
+Route::prefix('api')->middleware(['auth'])->name('api.')->group(function () {
+    // ✅ API para agendamentos (mobile app futuro)
+    Route::get('/agendamentos', function () {
+        $user = auth()->user();
+        
+        if ($user->tipo_usuario === 'usuario') {
+            // Retornar agendamentos do usuário
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+        
+        return response()->json(['error' => 'Unauthorized'], 403);
+    })->name('agendamentos');
+    
+    // ✅ API para perfil
+    Route::get('/perfil', function () {
+        return response()->json([
+            'success' => true,
+            'data' => auth()->user()->only(['id', 'name', 'email', 'telefone', 'tipo_usuario'])
+        ]);
+    })->name('perfil');
 });
+
+/*
+|--------------------------------------------------------------------------
+| ✅ ROTAS DE WEBHOOK (FUTURO - INTEGRAÇÕES)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('webhook')->name('webhook.')->group(function () {
+    // ✅ Webhook para WhatsApp
+    Route::post('/whatsapp', function () {
+        return response()->json(['status' => 'ok']);
+    })->name('whatsapp');
+    
+    // ✅ Webhook para email
+    Route::post('/email', function () {
+        return response()->json(['status' => 'ok']);
+    })->name('email');
+});
+
+/*
+|--------------------------------------------------------------------------
+| ✅ ROTAS DE MANUTENÇÃO E SAÚDE DO SISTEMA
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/health', function () {
+    try {
+        // ✅ Verificar banco de dados
+        \DB::connection()->getPdo();
+        
+        return response()->json([
+            'status' => 'healthy',
+            'database' => 'connected',
+            'timestamp' => now()->toISOString(),
+            'version' => config('app.version', '1.0.0')
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'database' => 'disconnected',
+            'error' => $e->getMessage(),
+            'timestamp' => now()->toISOString()
+        ], 500);
+    }
+})->name('health');
+
+Route::get('/version', function () {
+    return response()->json([
+        'app_name' => config('app.name'),
+        'version' => config('app.version', '1.0.0'),
+        'environment' => config('app.env'),
+        'php_version' => PHP_VERSION,
+        'laravel_version' => app()->version(),
+        'timestamp' => now()->toISOString()
+    ]);
+})->name('version');
+
+/*
+|--------------------------------------------------------------------------
+| ✅ FALLBACK E ROTAS DE ERRO
+|--------------------------------------------------------------------------
+*/
+
+// ✅ Fallback para rotas não encontradas
+Route::fallback(function () {
+    if (request()->expectsJson()) {
+        return response()->json([
+            'error' => 'Route not found',
+            'message' => 'The requested route does not exist.'
+        ], 404);
+    }
+    
+    return view('errors.404');
+});
+
+/*
+|--------------------------------------------------------------------------
+| ✅ INCLUI ROTAS DE AUTENTICAÇÃO PADRÃO DO LARAVEL (SE NECESSÁRIO)
+|--------------------------------------------------------------------------
+*/
+
+// Comentado pois estamos usando AuthController customizado
+// require __DIR__.'/auth.php';
