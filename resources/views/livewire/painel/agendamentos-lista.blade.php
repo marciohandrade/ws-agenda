@@ -5,28 +5,78 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             
-            {{-- Título e Resumo --}}
+            {{-- Título e Filtros de Período Compactos --}}
             <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
                     <h1 class="text-2xl font-bold text-gray-900">📅 Agendamentos</h1>
-                    <div class="hidden lg:flex items-center gap-2 text-sm text-gray-500">
-                        <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
-                            Hoje: {{ $resumo['hoje'] }}
-                        </span>
-                        <span class="bg-gray-50 text-gray-700 px-2 py-1 rounded-full font-medium">
-                            Mês: {{ $resumo['total_mes'] }}
-                        </span>
+                    
+                    {{-- Filtros de Período Compactos - Desktop --}}
+                    <div class="hidden lg:flex items-center gap-2">
+                        <button 
+                            wire:click="filtrarPorPeriodo('todos')"
+                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'todos' ? 'bg-green-100 text-green-800' : 'bg-gray-50 text-gray-600 hover:bg-green-50' }}"
+                        >
+                            📋 Todos: {{ $this->contadoresPeriodo['todos'] }}
+                        </button>
+                        <button 
+                            wire:click="filtrarPorPeriodo('hoje')"
+                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'hoje' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 text-gray-600 hover:bg-blue-50' }}"
+                        >
+                            📅 Hoje: {{ $this->contadoresPeriodo['hoje'] }}
+                        </button>
+                        <button 
+                            wire:click="filtrarPorPeriodo('amanha')"
+                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'amanha' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 text-gray-600 hover:bg-purple-50' }}"
+                        >
+                            🌅 Amanhã: {{ $this->contadoresPeriodo['amanha'] }}
+                        </button>
+                        <button 
+                            wire:click="filtrarPorPeriodo('semana')"
+                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'semana' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-600 hover:bg-orange-50' }}"
+                        >
+                            📆 Semana: {{ $this->contadoresPeriodo['semana'] }}
+                        </button>
+                        <button 
+                            wire:click="filtrarPorPeriodo('mes')"
+                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'mes' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-50 text-gray-600 hover:bg-indigo-50' }}"
+                        >
+                            🗓️ Mês: {{ $this->contadoresPeriodo['mes'] }}
+                        </button>
                     </div>
                 </div>
                 
-                {{-- Resumo Mobile --}}
-                <div class="flex lg:hidden items-center gap-2 text-sm">
-                    <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium text-xs">
-                        Hoje: {{ $resumo['hoje'] }}
-                    </span>
-                    <span class="bg-gray-50 text-gray-700 px-2 py-1 rounded-full font-medium text-xs">
-                        Mês: {{ $resumo['total_mes'] }}
-                    </span>
+                {{-- Filtros de Período Compactos - Mobile --}}
+                <div class="flex lg:hidden items-center gap-1 text-xs overflow-x-auto pb-1 filtros-periodo-mobile">
+                    <button 
+                        wire:click="filtrarPorPeriodo('todos')"
+                        class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'todos' ? 'bg-green-100 text-green-800' : 'bg-gray-50 text-gray-600' }}"
+                    >
+                        📋 {{ $this->contadoresPeriodo['todos'] }}
+                    </button>
+                    <button 
+                        wire:click="filtrarPorPeriodo('hoje')"
+                        class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'hoje' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 text-gray-600' }}"
+                    >
+                        📅 {{ $this->contadoresPeriodo['hoje'] }}
+                    </button>
+                    <button 
+                        wire:click="filtrarPorPeriodo('amanha')"
+                        class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'amanha' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 text-gray-600' }}"
+                    >
+                        🌅 {{ $this->contadoresPeriodo['amanha'] }}
+                    </button>
+                    <button 
+                        wire:click="filtrarPorPeriodo('semana')"
+                        class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'semana' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-600' }}"
+                    >
+                        📆 {{ $this->contadoresPeriodo['semana'] }}
+                    </button>
+                    <button 
+                        wire:click="filtrarPorPeriodo('mes')"
+                        class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'mes' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-50 text-gray-600' }}"
+                    >
+                        🗓️ {{ $this->contadoresPeriodo['mes'] }}
+                    </button>
                 </div>
             </div>
 
@@ -92,35 +142,11 @@
                         </button>
                     </div>
                 @endif
-                
-                {{-- 🧪 SEÇÃO DE DEBUG SIMPLIFICADA (opcional) --}}
-                @if(config('app.debug'))
-                    <div class="mt-4 pt-4 border-t border-gray-200 bg-yellow-50 rounded-lg p-3">
-                        <div class="flex flex-wrap items-center gap-2 mb-2">
-                            <span class="text-xs font-semibold text-yellow-700">🧪 DEBUG:</span>
-                            <div class="text-xs text-gray-600">
-                                Status: <span class="font-bold">{{ $filtroStatus ?: 'Nenhum' }}</span> |
-                                Período: <span class="font-bold">{{ ucfirst($filtroPeriodo) }}</span> |
-                                Resultados: <span class="font-bold">{{ $agendamentos->count() }}</span> |
-                                Mobile: <span class="font-bold">{{ $this->isMobile ? 'Sim' : 'Não' }}</span> |
-                                View: <span class="font-bold">{{ ucfirst($viewMode) }}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-wrap gap-2">
-                            <button wire:click="filtrarPorStatus('confirmado')" class="px-2 py-1 bg-green-500 text-white text-xs rounded">✅ Confirmado</button>
-                            <button wire:click="filtrarPorStatus('pendente')" class="px-2 py-1 bg-yellow-500 text-white text-xs rounded">📋 Pendente</button>
-                            <button wire:click="limparFiltroStatus" class="px-2 py-1 bg-gray-500 text-white text-xs rounded">🧹 Limpar</button>
-                            <button wire:click="setPeriodo('todos')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded">📅 Todos</button>
-                            <button wire:click="testarQuery" class="px-2 py-1 bg-purple-500 text-white text-xs rounded">🧪 Teste</button>
-                        </div>
-                    </div>
-                @endif
             </div>
         </div>
     </div>
 
-    {{-- 🚀 FILTROS DE STATUS COM DADOS REAIS --}}
+    {{-- 🚀 FILTROS DE STATUS --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         
         {{-- Status Principais - USANDO DADOS REAIS --}}
@@ -128,7 +154,7 @@
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
                     <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    Filtros Rápidos
+                    Filtros por Status
                 </h3>
                 @if($filtroStatus)
                     <button 
@@ -173,14 +199,6 @@
                                     {{ $config['count'] }}
                                 </span>
                             @endif
-                            
-                            {{-- Indicador de loading --}}
-                            <div wire:loading wire:target="setStatus('{{ $status }}')" class="ml-1">
-                                <svg class="animate-spin h-3 w-3 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </div>
                         </button>
                     @endforeach
 
@@ -305,11 +323,18 @@
                 <h3 class="font-semibold text-gray-900">Agendamentos</h3>
                 <span class="text-sm text-gray-500">({{ $agendamentos->total() }} {{ $agendamentos->total() === 1 ? 'resultado' : 'resultados' }})</span>
                 
-                {{-- Indicador de filtro ativo --}}
+                {{-- Indicadores de filtros ativos --}}
                 @if($filtroStatus)
                     <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                        Filtro: {{ $statusPrincipais[$filtroStatus]['label'] ?? ucfirst($filtroStatus) }}
+                        Status: {{ $statusPrincipais[$filtroStatus]['label'] ?? ucfirst($filtroStatus) }}
                         <button wire:click="setStatus('')" class="ml-1 hover:text-blue-900">✕</button>
+                    </span>
+                @endif
+                
+                @if($filtroPeriodo !== 'todos')
+                    <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        Período: {{ ucfirst($filtroPeriodo) }}
+                        <button wire:click="setPeriodo('todos')" class="ml-1 hover:text-green-900">✕</button>
                     </span>
                 @endif
                 
@@ -361,13 +386,13 @@
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900">Nenhum agendamento encontrado</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        @if($buscaUnificada || $filtroCliente || $filtroData || $filtroStatus || $filtroServico)
+                        @if($buscaUnificada || $filtroCliente || $filtroData || $filtroStatus || $filtroServico || $filtroPeriodo !== 'todos')
                             Tente ajustar os filtros para encontrar o que procura.
                         @else
                             Que tal criar o primeiro agendamento?
                         @endif
                     </p>
-                    @if($buscaUnificada || $filtroCliente || $filtroData || $filtroStatus || $filtroServico)
+                    @if($buscaUnificada || $filtroCliente || $filtroData || $filtroStatus || $filtroServico || $filtroPeriodo !== 'todos')
                         <div class="mt-6">
                             <button 
                                 wire:click="limparFiltros"
@@ -425,5 +450,15 @@
         .scrollbar-thin {
             scrollbar-width: none;
         }
+    }
+    
+    /* 🆕 Scroll horizontal para filtros de período mobile */
+    .filtros-periodo-mobile {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .filtros-periodo-mobile::-webkit-scrollbar {
+        display: none;
     }
 </style>

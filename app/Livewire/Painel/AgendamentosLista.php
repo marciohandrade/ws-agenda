@@ -148,6 +148,34 @@ class AgendamentosLista extends Component
         ];
     }
 
+    // 🆕 COMPUTED PROPERTY PARA CONTADORES DE PERÍODO
+    public function getContadoresPeriodoProperty()
+    {
+        try {
+            $hoje = today();
+            $amanha = today()->addDay();
+            $fimSemana = today()->addWeek();
+            
+            return [
+                'hoje' => Agendamento::whereDate('data_agendamento', $hoje)->count(),
+                'amanha' => Agendamento::whereDate('data_agendamento', $amanha)->count(),
+                'semana' => Agendamento::whereBetween('data_agendamento', [$hoje, $fimSemana])->count(),
+                'mes' => Agendamento::whereMonth('data_agendamento', $hoje->month)
+                    ->whereYear('data_agendamento', $hoje->year)->count(),
+                'todos' => Agendamento::count()
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Erro ao calcular contadores de período: ' . $e->getMessage());
+            return [
+                'hoje' => 0,
+                'amanha' => 0,
+                'semana' => 0,
+                'mes' => 0,
+                'todos' => 0
+            ];
+        }
+    }
+
     // 🆕 MÉTODO PARA OBTER CONFIGURAÇÕES DE STATUS
     public function getStatusConfigProperty()
     {
@@ -426,7 +454,7 @@ class AgendamentosLista extends Component
         $this->filtroPeriodo = 'todos'; // 🔧 MUDANÇA: limpar para "todos" em vez de "hoje"
         $this->filtroOrdenacao = 'data_asc';
         $this->resetPage();
-        $this->dispatch('toast-info', 'Filtros limpos');
+        $this->dispatch('toast-info', 'Todos os filtros foram limpos');
     }
 
     public function toggleFiltros()
@@ -461,6 +489,29 @@ class AgendamentosLista extends Component
         $this->filtroPeriodo = $periodo;
         $this->filtroData = ''; // Limpa filtro de data específica
         $this->resetPage();
+        
+        // 🆕 Dispatch para melhor UX
+        $periodoLabels = [
+            'todos' => 'Todos os agendamentos',
+            'hoje' => 'Agendamentos de hoje',
+            'amanha' => 'Agendamentos de amanhã', 
+            'semana' => 'Agendamentos desta semana',
+            'mes' => 'Agendamentos deste mês'
+        ];
+        
+        $label = $periodoLabels[$periodo] ?? 'Período selecionado';
+        $this->dispatch('toast-info', $label);
+    }
+
+    // 🆕 MÉTODO ESPECÍFICO PARA FILTROS RÁPIDOS DE PERÍODO
+    public function filtrarPorPeriodo($periodo)
+    {
+        // Se já está no período selecionado, vai para "todos"
+        if ($this->filtroPeriodo === $periodo) {
+            $this->setPeriodo('todos');
+        } else {
+            $this->setPeriodo($periodo);
+        }
     }
 
     public function setFiltroRapido($tipo, $valor)
@@ -724,6 +775,7 @@ class AgendamentosLista extends Component
             'statusSecundarios' => $statusSecundarios,
             'totalSecundarios' => $totalSecundarios,
             'statusConfig' => $this->statusConfig, // 🆕 Passa configuração para view
+            'contadoresPeriodo' => $this->contadoresPeriodo, // 🆕 Passa contadores de período
         ])->layout('layouts.painel');
     }
 
