@@ -14,11 +14,11 @@ class AgendamentosLista extends Component
     use WithPagination;
 
     // ====== FILTROS PRINCIPAIS ======
-    public $buscaUnificada = ''; // 🔍 Busca inteligente principal
+    public $buscaUnificada = '';
     public $filtroCliente = '';
     public $filtroData = '';
     public $filtroStatus = '';
-    public $filtroPeriodo = 'todos'; // 🔧 MUDANÇA: padrão agora é "todos" em vez de "hoje"
+    public $filtroPeriodo = 'todos'; // ✅ CORRIGIDO: padrão é "todos"
     public $filtroServico = '';
     
     // ====== FILTROS AVANÇADOS ======
@@ -41,7 +41,7 @@ class AgendamentosLista extends Component
         'filtroCliente' => ['except' => ''],
         'filtroData' => ['except' => ''],
         'filtroStatus' => ['except' => ''],
-        'filtroPeriodo' => ['except' => 'todos'], // 🔧 MUDANÇA: padrão agora é "todos"
+        'filtroPeriodo' => ['except' => 'todos'], // ✅ CORRIGIDO
         'filtroServico' => ['except' => ''],
         'showStatusSecundarios' => ['except' => false],
     ];
@@ -50,11 +50,10 @@ class AgendamentosLista extends Component
     public function getAgendamentosProperty()
     {
         try {
-            // 🔧 QUERY PRINCIPAL 
             $query = Agendamento::with(['cliente:id,nome,telefone', 'servico:id,nome'])
                 ->select(['id', 'cliente_id', 'servico_id', 'data_agendamento', 'horario_agendamento', 'status', 'observacoes', 'created_at']);
 
-            // 🧠 BUSCA INTELIGENTE (prioridade máxima)
+            // Busca inteligente (prioridade máxima)
             if ($this->buscaUnificada) {
                 $query = $this->aplicarBuscaInteligente($query, $this->buscaUnificada);
             } else {
@@ -71,18 +70,13 @@ class AgendamentosLista extends Component
             // Ordenação
             $query = $this->aplicarOrdenacao($query);
 
-            // 📱 PAGINAÇÃO MOBILE-FIRST
+            // Paginação
             $isMobile = $this->detectarMobile();
             $itensPorPagina = $this->getItensPorPagina($isMobile);
             
-            $resultado = $query->paginate($itensPorPagina);
-            
-            return $resultado;
+            return $query->paginate($itensPorPagina);
             
         } catch (\Exception $e) {
-            \Log::error('Erro na query de agendamentos: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
             // Em caso de erro, retorna paginação vazia
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 collect([]), 0, 10, 1, ['path' => request()->url()]
@@ -90,39 +84,28 @@ class AgendamentosLista extends Component
         }
     }
 
-    // 🆕 MÉTODO OTIMIZADO PARA ITENS POR PÁGINA
     private function getItensPorPagina($isMobile)
     {
-        try {
-            $config = config('agendamentos.performance.pagination', [
-                'mobile' => 8,
-                'tablet' => 12,
-                'desktop' => 15
-            ]);
-            
-            if ($isMobile) {
-                return $config['mobile'] ?? 8;
-            }
-            
-            // Detecta tablet vs desktop baseado na largura da tela
-            $userAgent = request()->header('User-Agent', '');
-            $isTablet = $userAgent && preg_match('/iPad|Tablet/i', $userAgent);
-            
-            return $isTablet ? ($config['tablet'] ?? 12) : ($config['desktop'] ?? 15);
-        } catch (\Exception $e) {
-            // Fallback seguro
-            return $isMobile ? 8 : 12;
+        $config = config('agendamentos.performance.pagination', [
+            'mobile' => 8,
+            'tablet' => 12,
+            'desktop' => 15
+        ]);
+        
+        if ($isMobile) {
+            return $config['mobile'] ?? 8;
         }
+        
+        $userAgent = request()->header('User-Agent', '');
+        $isTablet = $userAgent && preg_match('/iPad|Tablet/i', $userAgent);
+        
+        return $isTablet ? ($config['tablet'] ?? 12) : ($config['desktop'] ?? 15);
     }
 
     private function detectarMobile()
     {
-        try {
-            $userAgent = request()->header('User-Agent', '');
-            return $userAgent && preg_match('/Mobile|Android|iPhone|iPad/i', $userAgent);
-        } catch (\Exception $e) {
-            return false; // Fallback para desktop
-        }
+        $userAgent = request()->header('User-Agent', '');
+        return $userAgent && preg_match('/Mobile|Android|iPhone|iPad/i', $userAgent);
     }
 
     public function getResumoProperty()
@@ -136,25 +119,21 @@ class AgendamentosLista extends Component
         ];
     }
 
-    // 🆕 MÉTODO PARA OBTER CONFIGURAÇÕES DE STATUS
     public function getStatusConfigProperty()
     {
         try {
             $config = config('agendamentos.status');
             
-            // Validação básica da configuração
             if (!$config || !isset($config['principais']) || !isset($config['secundarios'])) {
                 return $this->getDefaultStatusConfig();
             }
             
             return $config;
         } catch (\Exception $e) {
-            \Log::warning('Erro ao carregar config de status: ' . $e->getMessage());
             return $this->getDefaultStatusConfig();
         }
     }
 
-    // 🆕 CONFIGURAÇÃO PADRÃO CASO O ARQUIVO CONFIG TENHA PROBLEMAS
     private function getDefaultStatusConfig()
     {
         return [
@@ -235,7 +214,7 @@ class AgendamentosLista extends Component
             });
         }
         
-        // Detecta status (verifica tanto principais quanto secundários)
+        // Detecta status
         $todosStatus = array_merge(
             array_keys($this->statusConfig['principais']),
             array_keys($this->statusConfig['secundarios'])
@@ -269,23 +248,22 @@ class AgendamentosLista extends Component
 
     private function aplicarFiltrosIndividuais($query)
     {
-        $query = $query->when($this->filtroCliente, function ($q) {
-            $q->whereHas('cliente', function ($clienteQ) {
-                $clienteQ->where('nome', 'like', '%' . $this->filtroCliente . '%');
+        return $query
+            ->when($this->filtroCliente, function ($q) {
+                $q->whereHas('cliente', function ($clienteQ) {
+                    $clienteQ->where('nome', 'like', '%' . $this->filtroCliente . '%');
+                });
+            })
+            ->when($this->filtroData, function ($q) {
+                $q->whereDate('data_agendamento', $this->filtroData);
+            })
+            ->when($this->filtroStatus, function ($q) {
+                // ✅ FILTRO CRÍTICO PARA OS CLICKS
+                $q->where('status', $this->filtroStatus);
+            })
+            ->when($this->filtroServico, function ($q) {
+                $q->where('servico_id', $this->filtroServico);
             });
-        })
-        ->when($this->filtroData, function ($q) {
-            $q->whereDate('data_agendamento', $this->filtroData);
-        })
-        ->when($this->filtroStatus, function ($q) {
-            // ✅ ESTE É O FILTRO CRUCIAL PARA OS CLICKS
-            $q->where('status', $this->filtroStatus);
-        })
-        ->when($this->filtroServico, function ($q) {
-            $q->where('servico_id', $this->filtroServico);
-        });
-
-        return $query;
     }
 
     private function aplicarFiltrosPeriodo($query)
@@ -294,17 +272,16 @@ class AgendamentosLista extends Component
             case 'hoje':
                 return $query->whereDate('data_agendamento', today());
             case 'amanha':
-                $amanha = today()->addDay();
-                return $query->whereDate('data_agendamento', $amanha);
+                return $query->whereDate('data_agendamento', today()->addDay());
             case 'semana':
                 return $query->whereBetween('data_agendamento', [today(), today()->addWeek()]);
             case 'mes':
                 return $query->whereMonth('data_agendamento', now()->month)
                             ->whereYear('data_agendamento', now()->year);
-            case 'todos': // 🔧 NOVO CASO
+            case 'todos': // ✅ CASO ADICIONADO
                 return $query;
             default:
-                return $query; // 'todos'
+                return $query;
         }
     }
 
@@ -335,7 +312,6 @@ class AgendamentosLista extends Component
                             ->orderBy('clientes.nome', 'asc')
                             ->select('agendamentos.*');
             case 'status':
-                // 🆕 Ordenação inteligente baseada na prioridade configurada
                 $statusPrincipais = array_keys($this->statusConfig['principais']);
                 $statusSecundarios = array_keys($this->statusConfig['secundarios']);
                 $todosStatus = array_merge($statusPrincipais, $statusSecundarios);
@@ -352,23 +328,8 @@ class AgendamentosLista extends Component
         try {
             $agendamento = Agendamento::findOrFail($agendamentoId);
             
-            // 🆕 Valida transição de status se configurado
-            if (config('agendamentos.status.comportamento.validar_transicoes', false)) {
-                if (!$this->validarTransicao($agendamento->status, $novoStatus)) {
-                    $this->dispatch('toast-erro', 'Transição de status não permitida.');
-                    return;
-                }
-            }
-            
-            $statusAnterior = $agendamento->status;
             $agendamento->update(['status' => $novoStatus]);
 
-            // 🆕 Log da mudança se habilitado
-            if (config('agendamentos.status.comportamento.log_mudancas_status', false)) {
-                $this->logMudancaStatus($agendamento, $statusAnterior, $novoStatus);
-            }
-
-            // 🆕 Obtém texto do status da configuração
             $statusConfig = $this->statusConfig;
             $statusTexto = $statusConfig['principais'][$novoStatus]['label'] ?? 
                           $statusConfig['secundarios'][$novoStatus]['label'] ?? 
@@ -376,11 +337,6 @@ class AgendamentosLista extends Component
 
             $this->dispatch('toast-sucesso', "Agendamento alterado para '{$statusTexto}' com sucesso!");
             $this->resetPage();
-            
-            // 🆕 Limpa cache de contadores se habilitado
-            if (config('agendamentos.performance.cache_contadores.enabled', false)) {
-                $this->limparCacheContadores();
-            }
             
         } catch (\Exception $e) {
             $this->dispatch('toast-erro', 'Erro ao alterar status do agendamento.');
@@ -396,11 +352,6 @@ class AgendamentosLista extends Component
             $this->dispatch('toast-sucesso', 'Agendamento excluído com sucesso!');
             $this->resetPage();
             
-            // 🆕 Limpa cache de contadores
-            if (config('agendamentos.performance.cache_contadores.enabled', false)) {
-                $this->limparCacheContadores();
-            }
-            
         } catch (\Exception $e) {
             $this->dispatch('toast-erro', 'Erro ao excluir agendamento.');
         }
@@ -411,7 +362,7 @@ class AgendamentosLista extends Component
     {
         $this->reset(['buscaUnificada', 'filtroCliente', 'filtroData', 'filtroStatus', 'filtroServico', 
                      'filtroDataInicio', 'filtroDataFim', 'filtroHorarioInicio', 'filtroHorarioFim']);
-        $this->filtroPeriodo = 'todos'; // 🔧 MUDANÇA: limpar para "todos" em vez de "hoje"
+        $this->filtroPeriodo = 'todos'; // ✅ CORRIGIDO
         $this->filtroOrdenacao = 'data_asc';
         $this->resetPage();
         $this->dispatch('toast-info', 'Filtros limpos');
@@ -427,7 +378,6 @@ class AgendamentosLista extends Component
         $this->showFiltrosAvancados = !$this->showFiltrosAvancados;
     }
 
-    // 🆕 TOGGLE PARA STATUS SECUNDÁRIOS
     public function toggleStatusSecundarios()
     {
         $this->showStatusSecundarios = !$this->showStatusSecundarios;
@@ -441,7 +391,7 @@ class AgendamentosLista extends Component
     public function setPeriodo($periodo)
     {
         $this->filtroPeriodo = $periodo;
-        $this->filtroData = ''; // Limpa filtro de data específica
+        $this->filtroData = '';
         $this->resetPage();
     }
 
@@ -453,33 +403,27 @@ class AgendamentosLista extends Component
         $this->resetPage();
     }
 
-    // ✅ MÉTODO PRINCIPAL PARA DEFINIR STATUS
+    // ✅ MÉTODO PRINCIPAL PARA DEFINIR STATUS - LIMPO
     public function setStatus($status)
     {
-        // Lógica simples: toggle on/off
+        // Toggle on/off
         if ($this->filtroStatus === $status) {
-            // Se já está filtrando este status, remove o filtro
             $this->filtroStatus = '';
             $this->dispatch('toast-info', 'Filtro removido');
         } else {
-            // Se não está filtrando ou está filtrando outro, define este status
             $this->filtroStatus = $status;
             $this->dispatch('toast-info', 'Filtrando por: ' . $status);
         }
         
-        // Reset página para ir para primeira página
         $this->resetPage();
-        
-        // Força atualização da interface
         $this->dispatch('$refresh');
     }
 
-    // 🧪 MÉTODOS DE DEBUG INTEGRADOS
+    // 🧪 MÉTODOS DE DEBUG SIMPLIFICADOS
     public function filtrarPorStatus($status)
     {
         $this->filtroStatus = $status;
         $this->resetPage();
-        
         $this->dispatch('toast-info', 'Forçando filtro para: ' . $status);
     }
 
@@ -487,7 +431,6 @@ class AgendamentosLista extends Component
     {
         $this->filtroStatus = '';
         $this->resetPage();
-        
         $this->dispatch('toast-info', 'Filtro de status removido');
     }
 
@@ -496,107 +439,29 @@ class AgendamentosLista extends Component
         $resultados = [];
         
         try {
-            // Teste 1: Sem filtros
-            $resultados['sem_filtros'] = Agendamento::count();
-            
-            // Teste 2: Com filtro confirmado
+            $resultados['total'] = Agendamento::count();
             $resultados['confirmado'] = Agendamento::where('status', 'confirmado')->count();
-            
-            // Teste 3: Com filtro pendente  
             $resultados['pendente'] = Agendamento::where('status', 'pendente')->count();
-            
-            // Teste 4: Com filtro cancelado
             $resultados['cancelado'] = Agendamento::where('status', 'cancelado')->count();
-            
-            // Teste 5: Hoje + Status
-            $resultados['hoje_confirmado'] = Agendamento::whereDate('data_agendamento', today())
-                ->where('status', 'confirmado')->count();
-                
-            // Teste 6: Todos os status únicos
-            $resultados['status_unicos'] = Agendamento::distinct('status')->pluck('status')->toArray();
-            
-            // Teste 7: Query atual completa
-            $queryAtual = $this->agendamentos;
-            $resultados['query_atual'] = $queryAtual->count();
-            $resultados['filtro_status_atual'] = $this->filtroStatus;
+            $resultados['hoje'] = Agendamento::whereDate('data_agendamento', today())->count();
+            $resultados['query_atual'] = $this->agendamentos->count();
+            $resultados['filtro_atual'] = $this->filtroStatus ?: 'nenhum';
             
         } catch (\Exception $e) {
             $resultados['erro'] = $e->getMessage();
         }
         
-        $message = "Confirmados: {$resultados['confirmado']} | Atual: {$resultados['query_atual']} | Filtro: {$resultados['filtro_status_atual']}";
+        $message = "Total: {$resultados['total']} | Confirmados: {$resultados['confirmado']} | Atual: {$resultados['query_atual']} | Filtro: {$resultados['filtro_atual']}";
         $this->dispatch('toast-info', $message);
         
         return $resultados;
     }
 
-    public function debugStatus()
-    {
-        $debug = [
-            'filtroStatus_atual' => $this->filtroStatus,
-            'all_properties' => [
-                'buscaUnificada' => $this->buscaUnificada,
-                'filtroCliente' => $this->filtroCliente,
-                'filtroData' => $this->filtroData,
-                'filtroStatus' => $this->filtroStatus,
-                'filtroPeriodo' => $this->filtroPeriodo,
-                'filtroServico' => $this->filtroServico,
-            ],
-            'query_tests' => [],
-            'contadores' => null
-        ];
-        
-        try {
-            // Query step by step
-            $queryBase = Agendamento::with(['cliente:id,nome,telefone', 'servico:id,nome'])
-                ->select(['id', 'cliente_id', 'servico_id', 'data_agendamento', 'horario_agendamento', 'status', 'observacoes', 'created_at']);
-            
-            $debug['query_tests']['base'] = $queryBase->count();
-            
-            // Com filtro de status
-            $queryStatus = clone $queryBase;
-            if ($this->filtroStatus) {
-                $queryStatus->where('status', $this->filtroStatus);
-            }
-            $debug['query_tests']['com_status'] = $queryStatus->count();
-            $debug['query_tests']['sql_status'] = $queryStatus->toSql();
-            
-            // Com filtro de período
-            $queryPeriodo = clone $queryBase;
-            if ($this->filtroPeriodo === 'hoje') {
-                $queryPeriodo->whereDate('data_agendamento', today());
-            }
-            $debug['query_tests']['com_periodo'] = $queryPeriodo->count();
-            
-            // Combinado
-            $queryCombinado = clone $queryBase;
-            if ($this->filtroStatus) {
-                $queryCombinado->where('status', $this->filtroStatus);
-            }
-            if ($this->filtroPeriodo === 'hoje') {
-                $queryCombinado->whereDate('data_agendamento', today());
-            }
-            $debug['query_tests']['combinado'] = $queryCombinado->count();
-            $debug['query_tests']['sql_combinado'] = $queryCombinado->toSql();
-            
-            $debug['contadores'] = $this->getContadoresStatus();
-            
-        } catch (\Exception $e) {
-            $debug['erro'] = $e->getMessage();
-        }
-        
-        $this->dispatch('toast-info', 'Debug executado - verifique logs');
-        
-        dd($debug);
-    }
-
-    // 🆕 MÉTODO PARA EDITAR AGENDAMENTO
     public function editarAgendamento($agendamentoId)
     {
         try {
             $agendamento = Agendamento::findOrFail($agendamentoId);
             
-            // Redireciona para página de edição ou abre modal
             $this->dispatch('abrir-modal-edicao', [
                 'agendamento' => $agendamento->toArray(),
                 'cliente' => $agendamento->cliente->toArray(),
@@ -608,46 +473,15 @@ class AgendamentosLista extends Component
         }
     }
 
-    // 🆕 MÉTODO PARA REAGENDAR AGENDAMENTO
-    public function reagendarAgendamento($agendamentoId)
-    {
-        try {
-            $agendamento = Agendamento::findOrFail($agendamentoId);
-            
-            // Altera status para reagendado e abre modal de reagendamento
-            $agendamento->update(['status' => 'reagendado']);
-            
-            $this->dispatch('abrir-modal-reagendamento', [
-                'agendamento' => $agendamento->toArray(),
-                'cliente' => $agendamento->cliente->toArray(),
-                'servico' => $agendamento->servico->toArray()
-            ]);
-            
-            $this->dispatch('toast-info', 'Agendamento marcado para reagendamento.');
-            $this->resetPage();
-            
-            // Limpa cache se habilitado
-            if (config('agendamentos.performance.cache_contadores.enabled', false)) {
-                $this->limparCacheContadores();
-            }
-            
-        } catch (\Exception $e) {
-            $this->dispatch('toast-erro', 'Erro ao reagendar agendamento.');
-        }
-    }
-
-    // 🆕 MÉTODO PARA VALIDAR TRANSIÇÕES DE STATUS
     public function validarTransicao($statusAtual, $novoStatus)
     {
         $config = $this->statusConfig;
         $comportamento = $config['comportamento'];
         
-        // Se transições livres estão permitidas, permite qualquer mudança
         if ($comportamento['permitir_transicoes_livres']) {
             return true;
         }
         
-        // Verifica se a transição está configurada
         $statusInfo = $config['principais'][$statusAtual] ?? $config['secundarios'][$statusAtual] ?? null;
         
         if (!$statusInfo) {
@@ -662,13 +496,11 @@ class AgendamentosLista extends Component
     // ====== LIFECYCLE HOOKS ======
     public function mount()
     {
-        // Detecta se é mobile
         $this->viewMode = $this->detectarMobile() ? 'cards' : 'table';
     }
 
     public function updating($property)
     {
-        // Reset página quando filtros mudam
         if (in_array($property, ['buscaUnificada', 'filtroCliente', 'filtroData', 'filtroStatus', 'filtroPeriodo', 
                                 'filtroServico', 'filtroDataInicio', 'filtroDataFim', 'filtroHorarioInicio', 'filtroHorarioFim'])) {
             $this->resetPage();
@@ -678,15 +510,9 @@ class AgendamentosLista extends Component
     // ====== RENDER OTIMIZADO ======
     public function render()
     {
-        // 📊 CONTADORES COM CACHE INTELIGENTE
-        $contadores = $this->getContadoresComCache();
-
-        // 🆕 MONTA STATUS PRINCIPAIS USANDO CONFIGURAÇÃO
+        $contadores = $this->getContadoresStatus();
         $statusPrincipais = $this->montarStatusPrincipais($contadores);
-        
-        // 🆕 MONTA STATUS SECUNDÁRIOS USANDO CONFIGURAÇÃO  
         $statusSecundarios = $this->montarStatusSecundarios($contadores);
-        
         $totalSecundarios = array_sum(array_column($statusSecundarios, 'count'));
 
         return view('livewire.painel.agendamentos-lista', [
@@ -697,11 +523,11 @@ class AgendamentosLista extends Component
             'statusPrincipais' => $statusPrincipais,
             'statusSecundarios' => $statusSecundarios,
             'totalSecundarios' => $totalSecundarios,
-            'statusConfig' => $this->statusConfig, // 🆕 Passa configuração para view
+            'statusConfig' => $this->statusConfig,
         ])->layout('layouts.painel');
     }
 
-    // 🆕 MÉTODOS AUXILIARES PARA MONTAGEM DE STATUS
+    // ====== MÉTODOS AUXILIARES ======
     private function montarStatusPrincipais($contadores)
     {
         $statusPrincipais = [];
@@ -721,7 +547,6 @@ class AgendamentosLista extends Component
             ];
         }
         
-        // Ordena por prioridade
         uasort($statusPrincipais, fn($a, $b) => $a['prioridade'] <=> $b['prioridade']);
         
         return $statusPrincipais;
@@ -735,7 +560,6 @@ class AgendamentosLista extends Component
         foreach ($config['secundarios'] as $status => $info) {
             $count = $contadores[$status] ?? 0;
             
-            // Só inclui se tiver agendamentos (comportamento configurável)
             if ($count > 0 || !$config['comportamento']['mostrar_contadores']) {
                 $cores = $config['cores'][$info['cor']] ?? $config['cores']['gray'];
                 
@@ -751,32 +575,9 @@ class AgendamentosLista extends Component
             }
         }
         
-        // Ordena por prioridade
         uasort($statusSecundarios, fn($a, $b) => $a['prioridade'] <=> $b['prioridade']);
         
         return $statusSecundarios;
-    }
-
-    // 📊 MÉTODO OTIMIZADO PARA CONTADORES COM CACHE
-    private function getContadoresComCache()
-    {
-        $cacheConfig = config('agendamentos.performance.cache_contadores', ['enabled' => false]);
-        
-        if (!$cacheConfig['enabled']) {
-            return $this->getContadoresStatus();
-        }
-        
-        $cacheKey = ($cacheConfig['key_prefix'] ?? 'agendamentos_contadores_') . md5(serialize([
-            $this->buscaUnificada, 
-            $this->filtroCliente, 
-            $this->filtroData, 
-            $this->filtroPeriodo,
-            $this->filtroServico
-        ]));
-        
-        return cache()->remember($cacheKey, $cacheConfig['duration'] ?? 300, function () {
-            return $this->getContadoresStatus();
-        });
     }
 
     private function getContadoresStatus()
@@ -787,50 +588,7 @@ class AgendamentosLista extends Component
                 ->pluck('count', 'status')
                 ->toArray();
         } catch (\Exception $e) {
-            \Log::error('Erro ao buscar contadores de status: ' . $e->getMessage());
             return [];
-        }
-    }
-
-    // 🆕 MÉTODO PARA LIMPAR CACHE
-    private function limparCacheContadores()
-    {
-        $cacheConfig = config('agendamentos.performance.cache_contadores', ['enabled' => false]);
-        
-        if (!$cacheConfig['enabled']) {
-            return;
-        }
-        
-        // Limpa todos os caches relacionados aos contadores
-        cache()->flush(); // Simplificado - em produção, usar padrão mais específico
-    }
-
-    // 🆕 MÉTODO PARA LOG DE MUDANÇAS DE STATUS
-    private function logMudancaStatus($agendamento, $statusAnterior, $novoStatus)
-    {
-        if (!config('agendamentos.auditoria.enabled', false)) {
-            return;
-        }
-
-        try {
-            // Implementar sistema de auditoria
-            // Pode usar um model de Log ou sistema de auditoria existente
-            \Log::info('Mudança de status do agendamento', [
-                'agendamento_id' => $agendamento->id,
-                'cliente' => $agendamento->cliente->nome,
-                'status_anterior' => $statusAnterior,
-                'novo_status' => $novoStatus,
-                'usuario_id' => auth()->id(),
-                'data_alteracao' => now(),
-                'ip' => request()->ip(),
-                'user_agent' => request()->userAgent()
-            ]);
-        } catch (\Exception $e) {
-            // Log do erro mas não interrompe o fluxo
-            \Log::error('Erro ao registrar log de mudança de status', [
-                'error' => $e->getMessage(),
-                'agendamento_id' => $agendamento->id ?? null
-            ]);
         }
     }
 }

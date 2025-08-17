@@ -11,48 +11,113 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- ✅ TAILWIND CSS CDN (garantia de classes completas) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-<!--     <!-- ✅ ALPINE.JS (necessário para interatividade) --> -->
-<!--     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script> -->
-
-    <!-- Scripts locais (mantidos para assets personalizados) -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <!-- ✅ LIVEWIRE STYLES -->
-    @livewireStyles
-
-    <!-- ✅ CONFIGURAÇÃO TAILWIND PERSONALIZADA -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a',
+    <!-- ✅ TAILWIND CSS - CONDICIONAL -->
+    @if(config('app.debug'))
+        {{-- Desenvolvimento: CDN para prototipação rápida --}}
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: {
+                                50: '#eff6ff',
+                                500: '#3b82f6',
+                                600: '#2563eb',
+                                700: '#1d4ed8',
+                                900: '#1e3a8a',
+                            }
                         }
                     }
                 }
             }
-        }
-    </script>
+        </script>
+    @endif
+    
+    <!-- ✅ SEMPRE CARREGA: CSS compilado (sobrescreve CDN em produção) -->
+    @vite(['resources/css/app.css'])
+    
+    <!-- ✅ AGENDAMENTOS CSS - CONDICIONAL -->
+    @if(request()->is('painel/agendamentos*'))
+        <style>
+            /* Scrollbar personalizada */
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
 
-    <!-- ✅ ESTILOS PERSONALIZADOS PARA PERFORMANCE -->
+            /* Status scroll containers */
+            .status-scroll-container {
+                position: relative;
+            }
+            
+            .status-scroll-container::before,
+            .status-scroll-container::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 1rem;
+                pointer-events: none;
+                z-index: 10;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .status-scroll-container::before {
+                left: 0;
+                background: linear-gradient(to right, #ffffff, transparent);
+            }
+            
+            .status-scroll-container::after {
+                right: 0;
+                background: linear-gradient(to left, #ffffff, transparent);
+            }
+
+            .status-scroll-container.can-scroll-left::before,
+            .status-scroll-container.can-scroll-right::after {
+                opacity: 1;
+            }
+
+            /* Status buttons com melhor performance */
+            .status-button {
+                transition: all 0.2s ease-in-out;
+                transform: translateZ(0); /* Hardware acceleration */
+            }
+
+            .status-button:hover {
+                transform: translateY(-1px);
+            }
+
+            .status-button-active {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Scroll suave para status */
+            .status-scroll {
+                scroll-behavior: smooth;
+            }
+        </style>
+    @endif
+
+    <!-- ✅ ALPINE.JS - SEM DUPLICAÇÃO -->
+    @if(app()->environment('local') && config('app.debug'))
+        {{-- DESENVOLVIMENTO: CDN para debug mais fácil --}}
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @else
+        {{-- PRODUÇÃO: Via Vite (sem CDN) --}}
+        @vite(['resources/js/app.js'])
+    @endif
+    
+    <!-- ✅ LIVEWIRE STYLES -->
+    @livewireStyles
+
+    <!-- ✅ ESTILOS GLOBAIS -->
     <style>
-        /* Scrollbar personalizada */
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-
         /* Smooth scrolling */
         html {
             scroll-behavior: smooth;
@@ -74,11 +139,25 @@
                 touch-action: manipulation;
             }
         }
+
+        /* Focus states melhorados */
+        button:focus,
+        a:focus,
+        input:focus,
+        select:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        /* Prevenção de flash */
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="font-sans antialiased bg-gray-50" x-data="{ open: false }">
     <div class="min-h-screen">
-        <!-- ✅ NAVIGATION OTIMIZADA -->
+        <!-- ✅ NAVIGATION (mantido exatamente como estava) -->
         <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -255,10 +334,15 @@
         </form>
     </div>
     
+    <!-- ✅ TOAST NOTIFICATIONS - CONDICIONAL -->
+    @if(request()->is('painel/agendamentos*'))
+        <x-toast-notifications />
+    @endif
+    
     <!-- ✅ LIVEWIRE SCRIPTS -->
     @livewireScripts
 
-    <!-- ✅ SCRIPT GLOBAL PARA TOASTS E UTILS -->
+    <!-- ✅ SCRIPTS GLOBAIS E FUNCIONALIDADES -->
     <script>
         // Global toast function
         window.showToast = function(message, type = 'success') {
@@ -273,8 +357,11 @@
             }
         };
 
-        // Auto-hide alerts after 5 seconds
+        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Layout carregado - Alpine status:', !!window.Alpine);
+            
+            // Auto-hide alerts after 5 seconds
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.alert-auto-hide');
                 alerts.forEach(function(alert) {
@@ -285,6 +372,108 @@
                     }
                 });
             }, 5000);
+
+            // ✅ FUNCIONALIDADES ESPECÍFICAS PARA AGENDAMENTOS
+            if (window.location.pathname.includes('/agendamentos')) {
+                initAgendamentosFeatures();
+            }
+        });
+
+        // ✅ FUNCIONALIDADES DE AGENDAMENTOS (INLINE - SEM ARQUIVO EXTERNO)
+        function initAgendamentosFeatures() {
+            console.log('🎯 Inicializando funcionalidades de agendamentos...');
+            
+            // Scroll horizontal inteligente
+            const scrollContainers = document.querySelectorAll('.status-scroll');
+            scrollContainers.forEach(container => {
+                if (!container) return;
+                
+                // Scroll horizontal com wheel do mouse
+                container.addEventListener('wheel', function(e) {
+                    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+                    e.preventDefault();
+                    container.scrollLeft += e.deltaY > 0 ? 60 : -60;
+                });
+                
+                // Indicadores de scroll
+                updateScrollIndicators(container);
+                container.addEventListener('scroll', () => updateScrollIndicators(container));
+            });
+
+            // Auto-scroll para status ativo
+            setTimeout(() => {
+                scrollContainers.forEach(container => {
+                    const activeButton = container.querySelector('.status-button-active');
+                    if (activeButton) {
+                        activeButton.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest',
+                            inline: 'center'
+                        });
+                    }
+                });
+            }, 200);
+
+            // Atalhos de teclado
+            document.addEventListener('keydown', function(e) {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+                
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.code) {
+                        case 'KeyF':
+                            e.preventDefault();
+                            const searchInput = document.querySelector('input[wire\\:model*="buscaUnificada"]');
+                            if (searchInput) {
+                                searchInput.focus();
+                                searchInput.select();
+                                showToast('🔍 Campo de busca focado', 'info');
+                            }
+                            break;
+                        case 'KeyR':
+                            e.preventDefault();
+                            showToast('🔄 Recarregando...', 'info');
+                            setTimeout(() => window.location.reload(), 300);
+                            break;
+                        case 'KeyC':
+                            e.preventDefault();
+                            if (window.Livewire) {
+                                const component = window.Livewire.find(getLivewireComponentId());
+                                if (component) {
+                                    component.call('limparFiltros');
+                                    showToast('🧹 Filtros limpos', 'success');
+                                }
+                            }
+                            break;
+                    }
+                }
+            });
+
+            console.log('✅ Funcionalidades de agendamentos ativas!');
+        }
+
+        // Atualiza indicadores visuais de scroll
+        function updateScrollIndicators(container) {
+            const wrapper = container.closest('.status-scroll-container');
+            if (!wrapper) return;
+            
+            const canScrollLeft = container.scrollLeft > 0;
+            const canScrollRight = container.scrollLeft < (container.scrollWidth - container.clientWidth);
+            
+            wrapper.classList.toggle('can-scroll-left', canScrollLeft);
+            wrapper.classList.toggle('can-scroll-right', canScrollRight);
+        }
+
+        // Obter ID do componente Livewire
+        function getLivewireComponentId() {
+            const component = document.querySelector('[wire\\:id]');
+            return component ? component.getAttribute('wire:id') : null;
+        }
+
+        // Reaplica funcionalidades após atualizações do Livewire
+        document.addEventListener('livewire:updated', function() {
+            if (window.location.pathname.includes('/agendamentos')) {
+                setTimeout(initAgendamentosFeatures, 100);
+            }
         });
     </script>
 </body>

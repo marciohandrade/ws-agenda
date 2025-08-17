@@ -284,6 +284,10 @@ Route::fallback(function () {
     return view('errors.404');
 });
 
+Route::get('/teste-alpine', function () {
+    return view('teste-alpine');
+})->middleware('auth')->name('teste.alpine');
+
 /*
 |--------------------------------------------------------------------------
 | ✅ INCLUI ROTAS DE AUTENTICAÇÃO PADRÃO DO LARAVEL (SE NECESSÁRIO)
