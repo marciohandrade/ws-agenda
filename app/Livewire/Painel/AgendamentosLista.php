@@ -90,6 +90,18 @@ class AgendamentosLista extends Component
         }
     }
 
+    // 🆕 COMPUTED PROPERTY PARA VERIFICAR SE DEVE MOSTRAR BOTÕES DE ALTERNÂNCIA
+    public function getMostrarBotoesViewProperty()
+    {
+        return !$this->detectarMobile();
+    }
+
+    // 🆕 COMPUTED PROPERTY PARA VERIFICAR SE É MOBILE
+    public function getIsMobileProperty()
+    {
+        return $this->detectarMobile();
+    }
+
     // 🆕 MÉTODO OTIMIZADO PARA ITENS POR PÁGINA
     private function getItensPorPagina($isMobile)
     {
@@ -433,9 +445,15 @@ class AgendamentosLista extends Component
         $this->showStatusSecundarios = !$this->showStatusSecundarios;
     }
 
+    // 🔧 MÉTODO ATUALIZADO PARA ALTERAÇÃO DE VIEW (só funciona se não for mobile)
     public function alterarView($modo)
     {
-        $this->viewMode = $modo;
+        // Se for mobile, força cards sempre
+        if ($this->detectarMobile()) {
+            $this->viewMode = 'cards';
+        } else {
+            $this->viewMode = $modo;
+        }
     }
 
     public function setPeriodo($periodo)
@@ -662,8 +680,16 @@ class AgendamentosLista extends Component
     // ====== LIFECYCLE HOOKS ======
     public function mount()
     {
-        // Detecta se é mobile
-        $this->viewMode = $this->detectarMobile() ? 'cards' : 'table';
+        // 🔧 MELHORIA: Detecta tipo de device e define view mode apropriado
+        $isMobile = $this->detectarMobile();
+        
+        if ($isMobile) {
+            // Mobile sempre cards
+            $this->viewMode = 'cards';
+        } else {
+            // Desktop/Tablet pode usar table como padrão ou cards baseado na preferência
+            $this->viewMode = 'table';
+        }
     }
 
     public function updating($property)

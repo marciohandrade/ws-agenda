@@ -71,24 +71,27 @@
                     <span class="hidden sm:inline">Filtros</span>
                 </button>
 
-                <div class="flex items-center bg-gray-100 rounded-lg p-1">
-                    <button 
-                        wire:click="alterarView('cards')"
-                        class="p-2 rounded-md text-sm font-medium transition-colors {{ $viewMode === 'cards' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                        </svg>
-                    </button>
-                    <button 
-                        wire:click="alterarView('table')"
-                        class="p-2 rounded-md text-sm font-medium transition-colors {{ $viewMode === 'table' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                </div>
+                {{-- 🔧 BOTÕES DE ALTERNÂNCIA - AGORA COM LÓGICA RESPONSIVA --}}
+                @if($this->mostrarBotoesView)
+                    <div class="hidden md:flex items-center bg-gray-100 rounded-lg p-1">
+                        <button 
+                            wire:click="alterarView('cards')"
+                            class="p-2 rounded-md text-sm font-medium transition-colors {{ $viewMode === 'cards' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                        </button>
+                        <button 
+                            wire:click="alterarView('table')"
+                            class="p-2 rounded-md text-sm font-medium transition-colors {{ $viewMode === 'table' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                @endif
                 
                 {{-- 🧪 SEÇÃO DE DEBUG SIMPLIFICADA (opcional) --}}
                 @if(config('app.debug'))
@@ -98,7 +101,9 @@
                             <div class="text-xs text-gray-600">
                                 Status: <span class="font-bold">{{ $filtroStatus ?: 'Nenhum' }}</span> |
                                 Período: <span class="font-bold">{{ ucfirst($filtroPeriodo) }}</span> |
-                                Resultados: <span class="font-bold">{{ $agendamentos->count() }}</span>
+                                Resultados: <span class="font-bold">{{ $agendamentos->count() }}</span> |
+                                Mobile: <span class="font-bold">{{ $this->isMobile ? 'Sim' : 'Não' }}</span> |
+                                View: <span class="font-bold">{{ ucfirst($viewMode) }}</span>
                             </div>
                         </div>
                         
@@ -307,6 +312,13 @@
                         <button wire:click="setStatus('')" class="ml-1 hover:text-blue-900">✕</button>
                     </span>
                 @endif
+                
+                {{-- 📱 Indicador de modo mobile no debug --}}
+                @if(config('app.debug') && $this->isMobile)
+                    <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        📱 Mobile Mode
+                    </span>
+                @endif
             </div>
             
             <div class="flex items-center gap-2">
@@ -322,7 +334,8 @@
         {{-- Conteúdo da Lista --}}
         <div class="p-4">
             @if($agendamentos->count() > 0)
-                @if($viewMode === 'cards')
+                {{-- 🔧 VISUALIZAÇÃO INTELIGENTE - Mobile sempre cards, Desktop pode escolher --}}
+                @if($viewMode === 'cards' || $this->isMobile)
                     {{-- Visualização em Cards --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         @foreach($agendamentos as $agendamento)
@@ -330,7 +343,7 @@
                         @endforeach
                     </div>
                 @else
-                    {{-- Visualização em Tabela --}}
+                    {{-- Visualização em Tabela (só para Desktop/Tablet) --}}
                     <div class="overflow-x-auto">
                         @include('livewire.painel.partials.agendamentos-table', ['agendamentos' => $agendamentos, 'statusConfig' => $statusConfig])
                     </div>
