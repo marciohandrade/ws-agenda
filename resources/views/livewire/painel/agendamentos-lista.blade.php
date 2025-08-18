@@ -13,12 +13,6 @@
                     {{-- Filtros de Período Compactos - Desktop --}}
                     <div class="hidden lg:flex items-center gap-2">
                         <button 
-                            wire:click="filtrarPorPeriodo('todos')"
-                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'todos' ? 'bg-green-100 text-green-800' : 'bg-gray-50 text-gray-600 hover:bg-green-50' }}"
-                        >
-                            📋 Todos: {{ $this->contadoresPeriodo['todos'] }}
-                        </button>
-                        <button 
                             wire:click="filtrarPorPeriodo('hoje')"
                             class="px-2 py-1 text-xs font-medium rounded-full transition-colors {{ $filtroPeriodo === 'hoje' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 text-gray-600 hover:bg-blue-50' }}"
                         >
@@ -42,41 +36,56 @@
                         >
                             🗓️ Mês: {{ $this->contadoresPeriodo['mes'] }}
                         </button>
+                        
+                        {{-- Botão para limpar filtro de período se houver algum ativo --}}
+                        @if($filtroPeriodo !== 'todos')
+                            <button 
+                                wire:click="setPeriodo('todos')"
+                                class="px-2 py-1 text-xs font-medium rounded-full transition-colors bg-red-50 text-red-600 hover:bg-red-100"
+                                title="Limpar filtro de período"
+                            >
+                                ✕ Limpar
+                            </button>
+                        @endif
                     </div>
                 </div>
                 
-                {{-- Filtros de Período Compactos - Mobile --}}
+                {{-- Filtros de Período Compactos - Mobile com nomes completos --}}
                 <div class="flex lg:hidden items-center gap-1 text-xs overflow-x-auto pb-1 filtros-periodo-mobile">
-                    <button 
-                        wire:click="filtrarPorPeriodo('todos')"
-                        class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'todos' ? 'bg-green-100 text-green-800' : 'bg-gray-50 text-gray-600' }}"
-                    >
-                        📋 {{ $this->contadoresPeriodo['todos'] }}
-                    </button>
                     <button 
                         wire:click="filtrarPorPeriodo('hoje')"
                         class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'hoje' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 text-gray-600' }}"
                     >
-                        📅 {{ $this->contadoresPeriodo['hoje'] }}
+                        📅 Hoje: {{ $this->contadoresPeriodo['hoje'] }}
                     </button>
                     <button 
                         wire:click="filtrarPorPeriodo('amanha')"
                         class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'amanha' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 text-gray-600' }}"
                     >
-                        🌅 {{ $this->contadoresPeriodo['amanha'] }}
+                        🌅 Amanhã: {{ $this->contadoresPeriodo['amanha'] }}
                     </button>
                     <button 
                         wire:click="filtrarPorPeriodo('semana')"
                         class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'semana' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-600' }}"
                     >
-                        📆 {{ $this->contadoresPeriodo['semana'] }}
+                        📆 Semana: {{ $this->contadoresPeriodo['semana'] }}
                     </button>
                     <button 
                         wire:click="filtrarPorPeriodo('mes')"
                         class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap {{ $filtroPeriodo === 'mes' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-50 text-gray-600' }}"
                     >
-                        🗓️ {{ $this->contadoresPeriodo['mes'] }}
+                        🗓️ Mês: {{ $this->contadoresPeriodo['mes'] }}
                     </button>
+                    
+                    {{-- Botão para limpar filtro mobile --}}
+                    @if($filtroPeriodo !== 'todos')
+                        <button 
+                            wire:click="setPeriodo('todos')"
+                            class="px-2 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap bg-red-50 text-red-600"
+                        >
+                            ✕ Limpar
+                        </button>
+                    @endif
                 </div>
             </div>
 
